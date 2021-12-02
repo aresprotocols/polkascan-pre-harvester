@@ -65,13 +65,15 @@ class BaseTask(celery.Task):
     def __call__(self, *args, **kwargs):
         self.engine = create_engine(DB_CONNECTION, echo=DEBUG, isolation_level="READ_UNCOMMITTED", pool_pre_ping=True)
         session_factory = sessionmaker(bind=self.engine, autoflush=False, autocommit=False)
-        self.session = scoped_session(session_factory)
+        self.scoped_session = scoped_session(session_factory)
+        self.session = self.scoped_session()
 
         return super().__call__(*args, **kwargs)
 
     def after_return(self, status, retval, task_id, args, kwargs, einfo):
-        if hasattr(self, 'session'):
-            self.session.remove()
+        if hasattr(self, 'scoped_session'):
+            self.scoped_session.remove()
+            self.session.close()
         if hasattr(self, 'engine'):
             self.engine.engine.dispose()
 
@@ -119,7 +121,7 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
                 # Process block
                 block = harvester.add_block(block_hash)
 
-                print('+ Added {} '.format(block_hash))
+                print('+ Block Added {} number {}'.format(block_hash, block.id))
 
                 add_count += 1
 

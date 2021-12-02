@@ -653,7 +653,7 @@ class SystemNewAccountEventProcessor(EventProcessor):
     def process_search_index(self, db_session):
         search_index = self.add_search_index(
             index_type_id=settings.SEARCH_INDEX_ACCOUNT_CREATED,
-            account_id=self.event.attributes[0]['value'].replace('0x', '')
+            account_id=self.event.attributes.replace('0x', '')
         )
 
         search_index.save(db_session)
@@ -725,6 +725,8 @@ class KilledAccount(EventProcessor):
     event_id = 'KilledAccount'
 
     def accumulation_hook(self, db_session):
+        print("KilledAccount")
+        print(self.event.attributes)
         # Check event requirements
         if len(self.event.attributes) == 1 and \
                 self.event.attributes[0]['type'] == 'AccountId':
@@ -947,16 +949,16 @@ class BalancesTransferProcessor(EventProcessor):
     def process_search_index(self, db_session):
         search_index = self.add_search_index(
             index_type_id=SEARCH_INDEX_BALANCETRANSFER,
-            account_id=self.event.attributes[0]['value'].replace('0x', ''),
-            sorting_value=self.event.attributes[2]['value']
+            account_id=self.event.attributes[0].replace('0x', ''),
+            sorting_value=self.event.attributes[2]
         )
 
         search_index.save(db_session)
 
         search_index = self.add_search_index(
             index_type_id=SEARCH_INDEX_BALANCETRANSFER,
-            account_id=self.event.attributes[1]['value'].replace('0x', ''),
-            sorting_value=self.event.attributes[2]['value']
+            account_id=self.event.attributes[1].replace('0x', ''),
+            sorting_value=self.event.attributes[2]
         )
 
         search_index.save(db_session)
@@ -969,8 +971,8 @@ class BalancesDeposit(EventProcessor):
     def process_search_index(self, db_session):
         search_index = self.add_search_index(
             index_type_id=settings.SEARCH_INDEX_BALANCES_DEPOSIT,
-            account_id=self.event.attributes[0]['value'].replace('0x', ''),
-            sorting_value=self.event.attributes[1]['value']
+            account_id=self.event.attributes[0].replace('0x', ''),
+            sorting_value=self.event.attributes[1]
         )
 
         search_index.save(db_session)
@@ -985,7 +987,7 @@ class HeartbeatReceivedEventProcessor(EventProcessor):
 
         search_index = self.add_search_index(
             index_type_id=SEARCH_INDEX_HEARTBEATRECEIVED,
-            account_id=self.event.attributes[0]['value'].replace('0x', ''),
+            account_id=self.event.attributes.replace('0x', ''),
             sorting_value=None
         )
 
@@ -1285,7 +1287,7 @@ class CouncilVotedEventProcessor(EventProcessor):
     def process_search_index(self, db_session):
         search_index = self.add_search_index(
             index_type_id=settings.SEARCH_INDEX_COUNCIL_VOTE,
-            account_id=self.event.attributes[0]['value'].replace('0x', '')
+            account_id=self.event.attributes.replace('0x', '')
         )
 
         search_index.save(db_session)
@@ -1360,8 +1362,8 @@ class StakingWithdrawn(EventProcessor):
     def process_search_index(self, db_session):
         search_index = self.add_search_index(
             index_type_id=settings.SEARCH_INDEX_STAKING_WITHDRAWN,
-            account_id=self.event.attributes[0]['value'].replace('0x', ''),
-            sorting_value=self.event.attributes[1]['value']
+            account_id=self.event.attributes[0].replace('0x', ''),
+            sorting_value=self.event.attributes[1]
         )
 
         search_index.save(db_session)
@@ -1374,8 +1376,8 @@ class ClaimsClaimed(EventProcessor):
     def process_search_index(self, db_session):
         search_index = self.add_search_index(
             index_type_id=settings.SEARCH_INDEX_CLAIMS_CLAIMED,
-            account_id=self.event.attributes[0]['value'].replace('0x', ''),
-            sorting_value=self.event.attributes[2]['value']
+            account_id=self.event.attributes[0].replace('0x', ''),
+            sorting_value=self.event.attributes[2]
         )
 
         search_index.save(db_session)

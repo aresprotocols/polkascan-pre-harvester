@@ -19,16 +19,12 @@
 #  tools.py
 
 import falcon
+from scalecodec.base import ScaleBytes, RuntimeConfiguration
+from scalecodec.types import GenericMetadataVersioned
+from substrateinterface import SubstrateInterface
 
 from app import settings
-from app.processors.converters import PolkascanHarvesterService
 from app.resources.base import BaseResource
-
-from scalecodec.base import ScaleBytes, RuntimeConfiguration
-from scalecodec.metadata import MetadataDecoder
-from scalecodec.block import EventsDecoder, ExtrinsicsDecoder
-
-from substrateinterface import SubstrateInterface
 from app.settings import SUBSTRATE_RPC_URL, SUBSTRATE_METADATA_VERSION
 from app.tasks import balance_snapshot
 
@@ -51,8 +47,7 @@ class ExtractMetadataResource(BaseResource):
             resp.status = falcon.HTTP_BAD_REQUEST
 
     def on_post(self, req, resp):
-        metadata = MetadataDecoder(ScaleBytes(req.media.get('result')))
-
+        metadata = GenericMetadataVersioned(ScaleBytes(req.media.get('result')))
         resp.status = falcon.HTTP_200
         resp.media = metadata.process()
 

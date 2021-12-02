@@ -17,38 +17,43 @@
 #  along with Polkascan. If not, see <http://www.gnu.org/licenses/>.
 #
 #  converters.py
+import contextlib
 import json
 import logging
-
 import math
 
-from app import settings
-
-from sqlalchemy import func, distinct
-from sqlalchemy.exc import SQLAlchemyError
-from app.models.harvester import Status
-from app.processors import NewSessionEventProcessor, Log, SlashEventProcessor, BalancesTransferProcessor
 from scalecodec.base import ScaleBytes, ScaleDecoder, RuntimeConfiguration
 from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
-from scalecodec.block import ExtrinsicsDecoder
-
-from app.processors.base import BaseService, ProcessorRegistry
-from scalecodec.type_registry import load_type_registry_file
+from scalecodec.type_registry import load_type_registry_file, load_type_registry_preset
+from sqlalchemy import func, distinct
+from sqlalchemy.exc import SQLAlchemyError
 from substrateinterface import SubstrateInterface, logger
 from substrateinterface.exceptions import SubstrateRequestException
 from substrateinterface.utils.hasher import xxh128
 
+from app import settings
 from app.models.data import Extrinsic, Block, Event, Runtime, RuntimeModule, RuntimeCall, RuntimeCallParam, \
     RuntimeEvent, RuntimeEventAttribute, RuntimeType, RuntimeStorage, BlockTotal, RuntimeConstant, AccountAudit, \
     AccountIndexAudit, ReorgBlock, ReorgExtrinsic, ReorgEvent, ReorgLog, RuntimeErrorMessage, Account, \
     AccountInfoSnapshot, SearchIndex
-
+from app.models.harvester import Status
+from app.processors import NewSessionEventProcessor, Log
+from app.processors.base import BaseService, ProcessorRegistry
 
 if settings.DEBUG:
     # Set Logger level to Debug
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
     logger.addHandler(ch)
+
+
+@contextlib.contextmanager
+def transaction(session):
+    if not session.in_transaction():
+        with session.begin():
+            yield
+    else:
+        yield
 
 
 class HarvesterCouldNotAddBlock(Exception):
@@ -221,14 +226,18 @@ class PolkascanHarvesterService(BaseService):
             if spec_version in self.substrate.metadata_cache:
                 self.metadata_store[spec_version] = self.substrate.metadata_cache[spec_version]
             else:
-                self.metadata_store[spec_version] = self.substrate.get_block_metadata(block_hash=block_hash)
+                self.substrate.init_runtime(block_hash)
+                self.metadata_store[spec_version] = self.substrate.metadata_decoder
 
         else:
             print('Metadata: CACHE MISS', spec_version)
 
             runtime_version_data = self.substrate.get_block_runtime_version(block_hash)
+            self.substrate.init_runtime(block_hash)
+            modules = self.substrate.metadata_decoder.pallets
 
-            self.db_session.begin(subtransactions=True)
+            # self.db_session.begin(subtransactions=True)
+            savepoint = self.db_session.begin_nested()
             try:
 
                 # Store metadata in database
@@ -244,7 +253,7 @@ class PolkascanHarvesterService(BaseService):
                     authoring_version=runtime_version_data["authoringVersion"],
                     count_call_functions=0,
                     count_events=0,
-                    count_modules=len(self.substrate.metadata_decoder.metadata.modules),
+                    count_modules=len(modules),
                     count_storage_functions=0,
                     count_constants=0,
                     count_errors=0
@@ -252,17 +261,17 @@ class PolkascanHarvesterService(BaseService):
 
                 runtime.save(self.db_session)
 
-                print('store version to db', self.substrate.metadata_decoder.version)
+                print('store version to db', spec_version)
 
-                for module_index, module in enumerate(self.substrate.metadata_decoder.metadata.modules):
+                for module_index, module in enumerate(modules):
 
                     if hasattr(module, 'index'):
                         module_index = module.index
 
                     # Check if module exists
                     if RuntimeModule.query(self.db_session).filter_by(
-                        spec_version=spec_version,
-                        module_id=module.get_identifier()
+                            spec_version=spec_version,
+                            module_id=module.get_identifier()
                     ).count() == 0:
                         module_id = module.get_identifier()
                     else:
@@ -276,10 +285,15 @@ class PolkascanHarvesterService(BaseService):
                     else:
                         storage_functions = []
 
+                    if len(storage_functions) > 0:
+                        prefix = module.value.get('storage').get('prefix')
+                    else:
+                        prefix = None
+
                     runtime_module = RuntimeModule(
                         spec_version=spec_version,
                         module_id=module_id,
-                        prefix=module.prefix,
+                        prefix=prefix,
                         name=module.name,
                         count_call_functions=len(module.calls or []),
                         count_storage_functions=len(storage_functions),
@@ -298,10 +312,12 @@ class PolkascanHarvesterService(BaseService):
 
                     if len(module.calls or []) > 0:
                         for idx, call in enumerate(module.calls):
+                            call.lookup = "{:02x}{:02x}".format(module_index, idx)
                             runtime_call = RuntimeCall(
                                 spec_version=spec_version,
                                 module_id=module_id,
-                                call_id=call.get_identifier(),
+                                # call_id=call.get_identifier(),
+                                call_id=call.name,
                                 index=idx,
                                 name=call.name,
                                 lookup=call.lookup,
@@ -319,7 +335,10 @@ class PolkascanHarvesterService(BaseService):
                                 runtime_call_param.save(self.db_session)
 
                     if len(module.events or []) > 0:
+
                         for event_index, event in enumerate(module.events):
+
+                            event.lookup = "{:02x}{:02x}".format(module_index, event_index)
                             runtime_event = RuntimeEvent(
                                 spec_version=spec_version,
                                 module_id=module_id,
@@ -336,7 +355,7 @@ class PolkascanHarvesterService(BaseService):
                                 runtime_event_attr = RuntimeEventAttribute(
                                     runtime_event_id=runtime_event.id,
                                     index=arg_index,
-                                    type=arg
+                                    type=arg.value
                                 )
                                 runtime_event_attr.save(self.db_session)
 
@@ -367,16 +386,17 @@ class PolkascanHarvesterService(BaseService):
                                 type_value = storage.type['DoubleMapType'].get('value')
                                 type_key2hasher = storage.type['DoubleMapType'].get('key2Hasher')
 
+                            _prefix = module.value_object['storage'].value_object['prefix']
                             runtime_storage = RuntimeStorage(
                                 spec_version=spec_version,
                                 module_id=module_id,
                                 index=idx,
                                 name=storage.name,
                                 lookup=None,
-                                default=storage.fallback,
+                                default=storage.value.get('default'),
                                 modifier=storage.modifier,
                                 type_hasher=type_hasher,
-                                storage_key=xxh128(module.prefix.encode()) + xxh128(storage.name.encode()),
+                                storage_key=xxh128(_prefix.data.data) + xxh128(storage.name.encode()),
                                 type_key1=type_key1,
                                 type_key2=type_key2,
                                 type_value=type_value,
@@ -431,7 +451,6 @@ class PolkascanHarvesterService(BaseService):
 
                 # Process types
                 for runtime_type_data in list(self.substrate.get_type_registry(block_hash=block_hash).values()):
-
                     runtime_type = RuntimeType(
                         spec_version=runtime_type_data["spec_version"],
                         type_string=runtime_type_data["type_string"],
@@ -441,12 +460,12 @@ class PolkascanHarvesterService(BaseService):
                     )
                     runtime_type.save(self.db_session)
 
-                self.db_session.commit()
-
+                savepoint.commit()
                 # Put in local store
                 self.metadata_store[spec_version] = self.substrate.metadata_decoder
             except SQLAlchemyError as e:
-                self.db_session.rollback()
+                print(e)
+                savepoint.rollback()
 
     def add_block(self, block_hash):
 
@@ -457,17 +476,18 @@ class PolkascanHarvesterService(BaseService):
         if settings.SUBSTRATE_MOCK_EXTRINSICS:
             self.substrate.mock_extrinsics = settings.SUBSTRATE_MOCK_EXTRINSICS
 
-        json_block = self.substrate.get_chain_block(block_hash)
-
-        parent_hash = json_block['block']['header'].pop('parentHash')
-        block_id = json_block['block']['header'].pop('number')
-        extrinsics_root = json_block['block']['header'].pop('extrinsicsRoot')
-        state_root = json_block['block']['header'].pop('stateRoot')
-        digest_logs = json_block['block']['header'].get('digest', {}).pop('logs', None)
-
+        json_block = self.substrate.get_block(block_hash, include_author=False)
+        header = json_block['header']
+        parent_hash = header['parentHash']
+        block_id = header['number']
+        extrinsics_root = header['extrinsicsRoot']
+        state_root = header['stateRoot']
+        digest_logs = []
+        for idx, log_data in enumerate(header.get('digest', {}).get('logs', [])):
+            digest_logs.append(log_data.data.to_hex())
         # Convert block number to numeric
-        if not block_id.isnumeric():
-            block_id = int(block_id, 16)
+        # if not block_id.isnumeric():
+        #     block_id = int(block_id, 16)
 
         # ==== Get block runtime from Substrate ==================
 
@@ -532,21 +552,21 @@ class PolkascanHarvesterService(BaseService):
             # TODO implemented solution in substrate interface for runtime transition blocks
             # Events are decoded against runtime of parent block
             RuntimeConfiguration().set_active_spec_version_id(parent_spec_version)
-            events_decoder = self.substrate.get_block_events(block_hash, self.metadata_store[parent_spec_version])
+            # events_decoder = self.substrate.get_block_events(block_hash, self.metadata_store[parent_spec_version])
+            events_decoder = self.substrate.get_events(block_hash)
 
             # Revert back to current runtime
             RuntimeConfiguration().set_active_spec_version_id(block.spec_version_id)
 
             event_idx = 0
 
-            for event in events_decoder.elements:
-
+            for event in events_decoder:
                 event.value['module_id'] = event.value['module_id'].lower()
 
                 model = Event(
                     block_id=block_id,
                     event_idx=event_idx,
-                    phase=event.value['phase'],
+                    phase=event.value_object['phase'].index,
                     extrinsic_idx=event.value['extrinsic_idx'],
                     type=event.value.get('event_index') or event.value.get('type'),
                     spec_version_id=parent_spec_version,
@@ -554,7 +574,8 @@ class PolkascanHarvesterService(BaseService):
                     event_id=event.value['event_id'],
                     system=int(event.value['module_id'] == 'system'),
                     module=int(event.value['module_id'] != 'system'),
-                    attributes=event.value['params'],
+                    # attributes=event.value['params'],
+                    attributes=event.params,
                     codec_error=False
                 )
 
@@ -587,14 +608,14 @@ class PolkascanHarvesterService(BaseService):
 
                 event_idx += 1
 
-            block.count_events = len(events_decoder.elements)
+            block.count_events = len(events_decoder)
 
         except SubstrateRequestException:
             block.count_events = 0
 
         # === Extract extrinsics from block ====
 
-        extrinsics_data = json_block['block'].pop('extrinsics')
+        extrinsics_data = json_block['extrinsics']
 
         block.count_extrinsics = len(extrinsics_data)
 
@@ -604,42 +625,56 @@ class PolkascanHarvesterService(BaseService):
 
         for extrinsic in extrinsics_data:
 
-            extrinsics_decoder = ExtrinsicsDecoder(
-                data=ScaleBytes(extrinsic),
-                metadata=self.metadata_store[parent_spec_version]
-            )
-
-            extrinsic_data = extrinsics_decoder.decode()
-
-            # Lookup result of extrinsic
             extrinsic_success = extrinsic_success_idx.get(extrinsic_idx, False)
 
-            if extrinsics_decoder.era:
-                era = extrinsics_decoder.era.raw_value
-            else:
-                era = None
+            # contains_transaction = int(extrinsic_data.get('version_info'), 16) >= 80
+
+            # if extrinsics_decoder.era:
+            #     era = extrinsics_decoder.era.raw_value
+            # else:
+            value = extrinsic.value
+            # print(value)
+            # print("=====extrinsic.value=====")
+            # print(extrinsic.value_object)
+            era = None
+            if 'era' in value:
+                era = ','.join(map(str, value.get('era')))
+
+            signature = None
+            if 'signature' in value:
+                t = value.get('signature')
+                signature = list(t.values())[0]
+
+            version_info = '04'
+            extrinsic_hash = value.get('extrinsic_hash')
+            address = None
+            if 'address' in value:
+                version_info = '84'
+                address = value.get('address').replace('0x', '')
+            if extrinsic_hash is not None:
+                extrinsic_hash = extrinsic_hash[2:]  # replace '0x'
 
             model = Extrinsic(
                 block_id=block_id,
                 extrinsic_idx=extrinsic_idx,
-                extrinsic_hash=extrinsics_decoder.extrinsic_hash,
-                extrinsic_length=extrinsic_data.get('extrinsic_length'),
-                extrinsic_version=extrinsic_data.get('version_info'),
-                signed=extrinsics_decoder.contains_transaction,
-                unsigned=not extrinsics_decoder.contains_transaction,
-                signedby_address=bool(extrinsics_decoder.contains_transaction and extrinsic_data.get('account_id')),
-                signedby_index=bool(extrinsics_decoder.contains_transaction and extrinsic_data.get('account_index')),
-                address_length=extrinsic_data.get('account_length'),
-                address=extrinsic_data.get('account_id'),
-                account_index=extrinsic_data.get('account_index'),
-                account_idx=extrinsic_data.get('account_idx'),
-                signature=extrinsic_data.get('signature'),
-                nonce=extrinsic_data.get('nonce'),
+                extrinsic_hash=extrinsic_hash,
+                extrinsic_length=value.get('extrinsic_length'),
+                extrinsic_version=version_info,
+                signed=extrinsic.signed,
+                unsigned=not extrinsic.signed,
+                signedby_address=bool(extrinsic.signed and 'address' in value),
+                signedby_index=bool(extrinsic.signed and 'account_index' in value),
+                address_length=value.get('account_length', None),
+                address=address,
+                account_index=value.get('account_index', None),
+                account_idx=value.get('account_idx', None),
+                signature=signature,
+                nonce=value.get('nonce', None),
                 era=era,
-                call=extrinsic_data.get('call_code'),
-                module_id=extrinsic_data.get('call_module'),
-                call_id=extrinsic_data.get('call_function'),
-                params=extrinsic_data.get('params'),
+                call=value.get('call').get('call_index').replace('0x', ''),  # "0x4901"
+                module_id=value.get('call').get('call_module'),
+                call_id=value.get('call').get('call_function'),
+                params=value.get('call').get('call_args'),
                 spec_version_id=parent_spec_version,
                 success=int(extrinsic_success),
                 error=int(not extrinsic_success),
@@ -652,7 +687,7 @@ class PolkascanHarvesterService(BaseService):
             extrinsic_idx += 1
 
             # Process extrinsic
-            if extrinsics_decoder.contains_transaction:
+            if extrinsic.signed:
                 block.count_extrinsics_signed += 1
 
                 if model.signedby_address:
@@ -842,7 +877,8 @@ class PolkascanHarvesterService(BaseService):
                                 integrity_head.save(self.db_session)
                                 self.db_session.commit()
 
-                            raise BlockIntegrityError('Block #{} is missing.. stopping check '.format(parent_block.id + 1))
+                            raise BlockIntegrityError(
+                                'Block #{} is missing.. stopping check '.format(parent_block.id + 1))
                         elif block.parent_hash != parent_block.hash:
 
                             self.process_reorg_block(parent_block)
@@ -859,11 +895,12 @@ class PolkascanHarvesterService(BaseService):
                             integrity_head.value = parent_block.id - 1
 
                             # Save integrity head if block hash of parent matches with hash in node
-                            #if parent_block.parent_hash == substrate.get_block_hash(integrity_head.value):
+                            # if parent_block.parent_hash == substrate.get_block_hash(integrity_head.value):
                             integrity_head.save(self.db_session)
                             self.db_session.commit()
 
-                            raise BlockIntegrityError('Block #{} failed integrity checks, Re-adding #{}.. '.format(parent_block.id, block.id))
+                            raise BlockIntegrityError(
+                                'Block #{} failed integrity checks, Re-adding #{}.. '.format(parent_block.id, block.id))
                         else:
                             integrity_head.value = block.id
 
@@ -994,7 +1031,8 @@ class PolkascanHarvesterService(BaseService):
                     search_index.save(self.db_session)
 
                 # Process extrinsic processors
-                for processor_class in ProcessorRegistry().get_extrinsic_processors(extrinsic.module_id, extrinsic.call_id):
+                for processor_class in ProcessorRegistry().get_extrinsic_processors(extrinsic.module_id,
+                                                                                    extrinsic.call_id):
                     extrinsic_processor = processor_class(block=block, extrinsic=extrinsic, substrate=self.substrate)
                     extrinsic_processor.process_search_index(self.db_session)
 
@@ -1045,7 +1083,6 @@ class PolkascanHarvesterService(BaseService):
                 accounts = [account[0] for account in self.db_session.query(distinct(Account.id))]
 
             for account_id in accounts:
-
                 self.create_balance_snapshot(block_id=block_id, account_id=account_id, block_hash=block_hash)
 
     def create_balance_snapshot(self, block_id, account_id, block_hash=None):
@@ -1119,15 +1156,3 @@ class PolkascanHarvesterService(BaseService):
                     Account.nonce: nonce,
                 }, synchronize_session='fetch'
             )
-
-
-
-
-
-
-
-
-
-
-
-

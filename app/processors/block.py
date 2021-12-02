@@ -21,9 +21,8 @@
 import binascii
 import dateutil
 from sqlalchemy import distinct
-
+from scalecodec.type_registry import load_type_registry_file, load_type_registry_preset
 from sqlalchemy.orm.exc import NoResultFound
-from substrateinterface.utils.hasher import blake2_256
 
 from app import settings
 from substrateinterface.utils.hasher import blake2_256
@@ -35,7 +34,6 @@ from app.utils.ss58 import ss58_encode, ss58_encode_account_index
 from scalecodec.base import ScaleBytes, RuntimeConfiguration
 
 from app.processors.base import BlockProcessor
-from scalecodec.block import LogDigest
 
 
 class LogBlockProcessor(BlockProcessor):
@@ -43,27 +41,31 @@ class LogBlockProcessor(BlockProcessor):
     def accumulation_hook(self, db_session):
 
         self.block.count_log = len(self.block.logs)
-
+        # TODO remove registry
+        self.substrate.runtime_config.update_type_registry(load_type_registry_preset(name="default"))
         for idx, log_data in enumerate(self.block.logs):
-            log_digest = LogDigest(ScaleBytes(log_data))
+            log_digest = self.substrate.runtime_config.create_scale_object(
+                "DigestItem", data=ScaleBytes(log_data)
+            )
             log_digest.decode()
 
+            log_type = log_digest.value_object[0] # ('PreRuntime', GenericPreRuntime)
             log = Log(
                 block_id=self.block.id,
                 log_idx=idx,
                 type_id=log_digest.index,
-                type=log_digest.index_value,
-                data=log_digest.value,
+                type=log_type,
+                data=log_digest.value[log_type],
             )
 
-            if log.type == 'PreRuntime':
-                if log.data['value']['engine'] == 'BABE':
+            if log_type == 'PreRuntime':
+                if log.data['engine'] == 'BABE':
                     # Determine block producer
-                    self.block.authority_index = log.data['value']['data']['authorityIndex']
-                    self.block.slot_number = log.data['value']['data']['slotNumber']
+                    self.block.authority_index = log.data['data']['authority_index']
+                    self.block.slot_number = log.data['data']['slot_number']
 
-                if log.data['value']['engine'] == 'aura':
-                    self.block.slot_number = log.data['value']['data']['slotNumber']
+                if log.data['engine'] == 'aura':
+                    self.block.slot_number = log.data['data']['slot_number']
 
             log.save(db_session)
 
