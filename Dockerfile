@@ -3,7 +3,7 @@ FROM python:3.8-buster
 ENV PYTHONUNBUFFERED 1
 
 # set working directory
-RUN mkdir -p /usr/src/app
+RUN mkdir -p /usr/src/app/data
 WORKDIR /usr/src/app
 
 RUN pip3 install --upgrade pip
