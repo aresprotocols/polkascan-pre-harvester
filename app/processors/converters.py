@@ -410,18 +410,18 @@ class PolkascanHarvesterService(BaseService):
 
                             # Decode value
                             try:
-                                value_obj = ScaleDecoder.get_decoder_class(
-                                    constant.type,
-                                    ScaleBytes(constant.constant_value)
+                                constant_value = constant.value_object['value'].value_object
+                                value_obj = self.substrate.runtime_config.create_scale_object(
+                                    constant.value.get("type"), data=ScaleBytes(constant_value)
                                 )
                                 value_obj.decode()
                                 value = value_obj.serialize()
                             except ValueError:
-                                value = constant.constant_value
+                                value = constant.value_object['value'].serialize()
                             except RemainingScaleBytesNotEmptyException:
-                                value = constant.constant_value
+                                value = constant.value_object['value'].serialize()
                             except NotImplementedError:
-                                value = constant.constant_value
+                                value = constant.value_object['value'].serialize()
 
                             if type(value) is list or type(value) is dict:
                                 value = json.dumps(value)

@@ -116,7 +116,7 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
 
     try:
 
-        for nr in range(0, 10):
+        for nr in range(0, 50):
             if not block or block.id > 0:
                 # Process block
                 block = harvester.add_block(block_hash)
@@ -147,6 +147,11 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
     except Exception as exc:
         print('! ERROR adding {}'.format(block_hash))
         raise HarvesterCouldNotAddBlock(block_hash) from exc
+
+    try:
+        harvester.substrate.close()
+    except Exception as e:
+        print("close connection error: {}".format(e))
 
     return {
         'result': '{} blocks added'.format(add_count),
@@ -210,8 +215,7 @@ def rebuilding_search_index(self, search_index_id=None, truncate=False):
 
 
 @app.task(base=BaseTask, bind=True)
-def start_harvester(self, check_gaps=False):
-
+def start_harvester(self, check_gaps=True):
     substrate = SubstrateInterface(
         url=SUBSTRATE_RPC_URL,
         type_registry_preset=settings.TYPE_REGISTRY,

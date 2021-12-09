@@ -41,8 +41,6 @@ class LogBlockProcessor(BlockProcessor):
     def accumulation_hook(self, db_session):
 
         self.block.count_log = len(self.block.logs)
-        # TODO remove registry
-        self.substrate.runtime_config.update_type_registry(load_type_registry_preset(name="default"))
         for idx, log_data in enumerate(self.block.logs):
             log_digest = self.substrate.runtime_config.create_scale_object(
                 "DigestItem", data=ScaleBytes(log_data)
