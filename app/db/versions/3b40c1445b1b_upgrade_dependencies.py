@@ -1,21 +1,23 @@
 """upgrade dependencies
 
-Revision ID: 3b40c1445b1b
+Revision ID: e5bd0b0f689b
 Revises: e627476917aa
-Create Date: 2021-12-02 17:43:05.076157
+Create Date: 2021-12-02 17:41:32.223887
 
 """
 from alembic import op
+import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = '3b40c1445b1b'
+revision = 'e5bd0b0f689b'
 down_revision = 'e627476917aa'
 branch_labels = None
 depends_on = None
 
 
 def upgrade():
+    op.drop_index('ix_data_session_validator_validator_session', table_name='data_session_validator')
     op.alter_column('data_extrinsic', 'era',
                     existing_type=mysql.VARCHAR(length=4),
                     type_=mysql.VARCHAR(length=20),
@@ -28,6 +30,11 @@ def upgrade():
                     existing_type=mysql.VARCHAR(length=255),
                     type_=mysql.JSON,
                     existing_nullable=True)
+    op.alter_column('data_session_validator', 'validator_session',
+                    existing_type=mysql.VARCHAR(length=64),
+                    type_=mysql.JSON,
+                    existing_nullable=True)
+    # op.alter_column('data_account'('era', sa.String(length=20), nullable=True),
 
 
 def downgrade():
@@ -43,3 +50,11 @@ def downgrade():
                     existing_type=mysql.JSON,
                     type_=mysql.VARCHAR(length=255),
                     existing_nullable=True)
+
+    op.alter_column('data_session_validator', 'validator_session',
+                    existing_type=mysql.JSON,
+                    type_=mysql.VARCHAR(length=64),
+                    existing_nullable=True)
+
+    op.create_index(op.f('ix_data_session_validator_validator_session'), 'data_session_validator',
+                    ['validator_session'], unique=False)

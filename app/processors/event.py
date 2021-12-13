@@ -19,8 +19,7 @@
 #  event.py
 #
 from packaging import version
-from scalecodec.base import RuntimeConfiguration
-
+from scalecodec.base import RuntimeConfiguration, ScaleBytes
 from app import settings
 from app.models.data import Contract, Session, AccountAudit, \
     AccountIndexAudit, SessionTotal, SessionValidator, RuntimeStorage, \
@@ -218,51 +217,51 @@ class NewSessionEventProcessor(EventProcessor):
         nominators = []
         validation_session_lookup = {}
 
-        substrate = SubstrateInterface(
-            url=settings.SUBSTRATE_RPC_URL,
-            runtime_config=RuntimeConfiguration(),
-            type_registry_preset=settings.TYPE_REGISTRY
-        )
-
+        substrate = self.substrate
         # Retrieve current era
         storage_call = RuntimeStorage.query(db_session).filter_by(
-            module_id='staking',
+            module_id='Staking',
             name='CurrentEra',
             spec_version=self.block.spec_version_id
         ).first()
 
+        def query_storage_value(storage_obj: RuntimeStorage, block_hash, params: list = None):
+            if params is None:
+                params = []
+            storage_hash = substrate.generate_storage_hash(
+                storage_module=storage_obj.module_id,
+                storage_function=storage_obj.name,
+                params=params,
+                hashers=storage_obj.get_hashers()
+            )
+            return substrate.get_storage_by_key(block_hash, storage_hash)
+
         if storage_call:
             try:
-                current_era = substrate.get_storage(
-                    block_hash=self.block.hash,
-                    module="Staking",
-                    function="CurrentEra",
-                    return_scale_type=storage_call.get_return_type(),
-                    hasher=storage_call.type_hasher,
-                    metadata_version=SUBSTRATE_METADATA_VERSION
-                )
-            except RemainingScaleBytesNotEmptyException:
+                query_value = query_storage_value(storage_call, self.block.hash)
+                scale_class = substrate.runtime_config.create_scale_object(storage_call.type_value,
+                                                                           data=ScaleBytes(query_value))
+                current_era = scale_class.decode()
+            except Exception as e:
+                print("parse type:{} error:{}".format(storage_call.type_value, e))
                 pass
 
         # Retrieve validators for new session from storage
 
         storage_call = RuntimeStorage.query(db_session).filter_by(
-            module_id='session',
+            module_id='Session',
             name='Validators',
             spec_version=self.block.spec_version_id
         ).first()
 
         if storage_call:
             try:
-                validators = substrate.get_storage(
-                    block_hash=self.block.hash,
-                    module="Session",
-                    function="Validators",
-                    return_scale_type=storage_call.get_return_type(),
-                    hasher=storage_call.type_hasher,
-                    metadata_version=SUBSTRATE_METADATA_VERSION
-                ) or []
-            except RemainingScaleBytesNotEmptyException:
+                query_value = query_storage_value(storage_call, self.block.hash)
+                scale_class = substrate.runtime_config.create_scale_object(storage_call.type_value,
+                                                                           data=ScaleBytes(query_value))
+                validators = scale_class.decode() or []
+            except Exception as e:
+                print("parse type:{} error:{}".format(storage_call.type_value, e))
                 pass
 
         # Retrieve all sessions in one call
@@ -271,58 +270,26 @@ class NewSessionEventProcessor(EventProcessor):
             # Retrieve session account
             # TODO move to network specific data types
             storage_call = RuntimeStorage.query(db_session).filter_by(
-                module_id='session',
+                module_id='Session',
                 name='QueuedKeys',
                 spec_version=self.block.spec_version_id
             ).first()
 
             if storage_call:
-                try:
-                    validator_session_list = substrate.get_storage(
-                        block_hash=self.block.hash,
-                        module="Session",
-                        function="QueuedKeys",
-                        return_scale_type=storage_call.get_return_type(),
-                        hasher=storage_call.type_hasher,
-                        metadata_version=SUBSTRATE_METADATA_VERSION
-                    ) or []
-                except RemainingScaleBytesNotEmptyException:
 
-                    try:
-                        validator_session_list = substrate.get_storage(
-                            block_hash=self.block.hash,
-                            module="Session",
-                            function="QueuedKeys",
-                            return_scale_type='Vec<(ValidatorId, LegacyKeys)>',
-                            hasher=storage_call.type_hasher,
-                            metadata_version=SUBSTRATE_METADATA_VERSION
-                        ) or []
-                    except RemainingScaleBytesNotEmptyException:
-                        try:
-                            validator_session_list = substrate.get_storage(
-                                block_hash=self.block.hash,
-                                module="Session",
-                                function="QueuedKeys",
-                                return_scale_type='Vec<(ValidatorId, EdgewareKeys)>',
-                                hasher=storage_call.type_hasher,
-                                metadata_version=SUBSTRATE_METADATA_VERSION
-                            ) or []
-                        except RemainingScaleBytesNotEmptyException:
-                            validator_session_list = []
+                try:
+                    query_value = query_storage_value(storage_call, self.block.hash)
+                    scale_class = substrate.runtime_config.create_scale_object(storage_call.type_value,
+                                                                               data=ScaleBytes(query_value))
+                    validator_session_list = scale_class.decode() or []
+                except Exception as e:
+                    print("parse type:{} error:{}".format(storage_call.type_value, e))
+                    validator_session_list = []
 
                 # build lookup dict
                 validation_session_lookup = {}
                 for validator_session_item in validator_session_list:
-                    session_key = ''
-
-                    if validator_session_item['keys'].get('grandpa'):
-                        session_key = validator_session_item['keys'].get('grandpa')
-
-                    if validator_session_item['keys'].get('ed25519'):
-                        session_key = validator_session_item['keys'].get('ed25519')
-
-                    validation_session_lookup[
-                        validator_session_item['validator'].replace('0x', '')] = session_key.replace('0x', '')
+                    validation_session_lookup[validator_session_item[0].replace('0x', '')] = validator_session_item[1]
 
         for rank_nr, validator_account in enumerate(validators):
             validator_stash = None
@@ -337,26 +304,21 @@ class NewSessionEventProcessor(EventProcessor):
 
                 # Retrieve stash account
                 storage_call = RuntimeStorage.query(db_session).filter_by(
-                    module_id='staking',
+                    module_id='Staking',
                     name='Bonded',
                     spec_version=self.block.spec_version_id
                 ).first()
 
                 if storage_call:
                     try:
-                        validator_controller = substrate.get_storage(
-                            block_hash=self.block.hash,
-                            module="Staking",
-                            function="Bonded",
-                            params=[validator_stash],
-                            return_scale_type=storage_call.get_return_type(),
-                            hasher=storage_call.type_hasher,
-                            metadata_version=SUBSTRATE_METADATA_VERSION
-                        ) or ''
-
+                        query_value = query_storage_value(storage_call, self.block.hash, [validator_stash])
+                        scale_class = substrate.runtime_config.create_scale_object(storage_call.type_value,
+                                                                                   data=ScaleBytes(query_value))
+                        validator_controller = scale_class.decode() or ''
                         validator_controller = validator_controller.replace('0x', '')
 
                     except RemainingScaleBytesNotEmptyException:
+                        print("parse type:{} error:{}".format(storage_call.type_value, e))
                         pass
 
                 # Retrieve session account
@@ -414,44 +376,38 @@ class NewSessionEventProcessor(EventProcessor):
 
             # Retrieve validator preferences for stash account
             storage_call = RuntimeStorage.query(db_session).filter_by(
-                module_id='staking',
+                module_id='Staking',
                 name='Validators',
                 spec_version=self.block.spec_version_id
             ).first()
 
             if storage_call:
                 try:
-                    validator_prefs = substrate.get_storage(
-                        block_hash=self.block.hash,
-                        module="Staking",
-                        function="Validators",
-                        params=[validator_stash],
-                        return_scale_type=storage_call.get_return_type(),
-                        hasher=storage_call.type_hasher,
-                        metadata_version=SUBSTRATE_METADATA_VERSION
-                    ) or {'col1': {}, 'col2': {}}
+                    query_value = query_storage_value(storage_call, self.block.hash, [validator_stash])
+                    scale_class = substrate.runtime_config.create_scale_object(storage_call.type_value,
+                                                                               data=ScaleBytes(query_value))
+                    validator_prefs = scale_class.decode() or {}
                 except RemainingScaleBytesNotEmptyException:
+                    print("parse type:{} error:{}".format(storage_call.type_value, e))
                     pass
 
             # Retrieve nominators
             storage_call = RuntimeStorage.query(db_session).filter_by(
-                module_id='staking',
-                name='Stakers',
+                module_id='Staking',
+                name='Nominators',
                 spec_version=self.block.spec_version_id
             ).first()
 
             if storage_call:
                 try:
-                    exposure = substrate.get_storage(
-                        block_hash=self.block.hash,
-                        module="Staking",
-                        function="Stakers",
-                        params=[validator_stash],
-                        return_scale_type=storage_call.get_return_type(),
-                        hasher=storage_call.type_hasher,
-                        metadata_version=SUBSTRATE_METADATA_VERSION
-                    ) or {}
+                    query_value = query_storage_value(storage_call, self.block.hash, [validator_stash])
+                    exposure = {}
+                    if query_value is not None:
+                        scale_class = substrate.runtime_config.create_scale_object(storage_call.type_value,
+                                                                                   data=ScaleBytes(query_value))
+                        exposure = scale_class.decode() or {}
                 except RemainingScaleBytesNotEmptyException:
+                    print("parse type:{} error:{}".format(storage_call.type_value, e))
                     pass
 
             if exposure.get('total'):
@@ -471,8 +427,8 @@ class NewSessionEventProcessor(EventProcessor):
                 rank_validator=rank_nr,
                 unlocking=validator_ledger.get('unlocking'),
                 count_nominators=len(exposure.get('others', [])),
-                unstake_threshold=validator_prefs.get('col1', {}).get('unstakeThreshold'),
-                commission=validator_prefs.get('col1', {}).get('validatorPayment')
+                unstake_threshold=validator_prefs.get('unstakeThreshold'),
+                commission=validator_prefs.get('commission')
             )
 
             session_validator.save(db_session)
@@ -987,6 +943,7 @@ class HeartbeatReceivedEventProcessor(EventProcessor):
 
         search_index = self.add_search_index(
             index_type_id=SEARCH_INDEX_HEARTBEATRECEIVED,
+            # account_id=self.event.attributes[0]['value'].replace('0x', ''),
             account_id=self.event.attributes.replace('0x', ''),
             sorting_value=None
         )

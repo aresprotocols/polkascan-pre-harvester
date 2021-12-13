@@ -17,11 +17,10 @@
 #  along with Polkascan. If not, see <http://www.gnu.org/licenses/>.
 #
 #  converters.py
-import contextlib
 import json
 import logging
 import math
-
+from typing import Optional
 from scalecodec.base import ScaleBytes, ScaleDecoder, RuntimeConfiguration
 from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
 from scalecodec.type_registry import load_type_registry_file, load_type_registry_preset
@@ -47,13 +46,11 @@ if settings.DEBUG:
     logger.addHandler(ch)
 
 
-@contextlib.contextmanager
-def transaction(session):
-    if not session.in_transaction():
-        with session.begin():
-            yield
-    else:
-        yield
+class AresSubstrateInterface(SubstrateInterface):
+    def implements_scaleinfo(self) -> Optional[bool]:
+        if self.metadata_decoder:
+            return self.metadata_decoder.portable_registry is not None
+        return False
 
 
 class HarvesterCouldNotAddBlock(Exception):
@@ -78,7 +75,7 @@ class PolkascanHarvesterService(BaseService):
         else:
             custom_type_registry = None
 
-        self.substrate = SubstrateInterface(
+        self.substrate = AresSubstrateInterface(
             url=settings.SUBSTRATE_RPC_URL,
             type_registry=custom_type_registry,
             type_registry_preset=type_registry,
@@ -216,6 +213,9 @@ class PolkascanHarvesterService(BaseService):
         else:
             initial_session_event.add_session_old(db_session=self.db_session, session_id=0)
 
+    ###
+    #  before process_metadata get_block had called init_runtime
+    ###
     def process_metadata(self, spec_version, block_hash):
 
         # Check if metadata already stored
@@ -226,7 +226,7 @@ class PolkascanHarvesterService(BaseService):
             if spec_version in self.substrate.metadata_cache:
                 self.metadata_store[spec_version] = self.substrate.metadata_cache[spec_version]
             else:
-                self.substrate.init_runtime(block_hash)
+                # self.substrate.init_runtime(block_hash)
                 self.metadata_store[spec_version] = self.substrate.metadata_decoder
 
         else:
@@ -361,30 +361,27 @@ class PolkascanHarvesterService(BaseService):
 
                     if len(storage_functions) > 0:
                         for idx, storage in enumerate(storage_functions):
+                            types = storage.get_params_type_string()
+                            value_type = storage.get_value_type_string()
+                            hashers = storage.get_param_hashers()
 
-                            # Determine type
-                            type_hasher = None
-                            type_key1 = None
-                            type_key2 = None
-                            type_value = None
+                            hasher_type1 = None
+                            hasher_type2 = None
+                            key_type1 = None
+                            key_type2 = None
                             type_is_linked = None
-                            type_key2hasher = None
 
-                            if storage.type.get('PlainType'):
-                                type_value = storage.type.get('PlainType')
+                            if len(hashers) == 1:
+                                hasher_type1 = hashers[0]
+                            elif len(hashers) == 2:
+                                hasher_type1 = hashers[0]
+                                hasher_type2 = hashers[1]
 
-                            elif storage.type.get('MapType'):
-                                type_hasher = storage.type['MapType'].get('hasher')
-                                type_key1 = storage.type['MapType'].get('key')
-                                type_value = storage.type['MapType'].get('value')
-                                type_is_linked = storage.type['MapType'].get('isLinked', False)
-
-                            elif storage.type.get('DoubleMapType'):
-                                type_hasher = storage.type['DoubleMapType'].get('hasher')
-                                type_key1 = storage.type['DoubleMapType'].get('key1')
-                                type_key2 = storage.type['DoubleMapType'].get('key2')
-                                type_value = storage.type['DoubleMapType'].get('value')
-                                type_key2hasher = storage.type['DoubleMapType'].get('key2Hasher')
+                            if len(types) == 1:
+                                key_type1 = types[0]
+                            elif len(types) == 2:
+                                key_type1 = types[0]
+                                key_type2 = types[1]
 
                             _prefix = module.value_object['storage'].value_object['prefix']
                             runtime_storage = RuntimeStorage(
@@ -395,19 +392,18 @@ class PolkascanHarvesterService(BaseService):
                                 lookup=None,
                                 default=storage.value.get('default'),
                                 modifier=storage.modifier,
-                                type_hasher=type_hasher,
+                                type_hasher=hasher_type1,
                                 storage_key=xxh128(_prefix.data.data) + xxh128(storage.name.encode()),
-                                type_key1=type_key1,
-                                type_key2=type_key2,
-                                type_value=type_value,
+                                type_key1=key_type1,
+                                type_key2=key_type2,
+                                type_value=value_type,
                                 type_is_linked=type_is_linked,
-                                type_key2hasher=type_key2hasher
+                                type_key2hasher=hasher_type2
                             )
                             runtime_storage.save(self.db_session)
 
                     if len(module.constants or []) > 0:
                         for idx, constant in enumerate(module.constants):
-
                             # Decode value
                             try:
                                 constant_value = constant.value_object['value'].value_object
@@ -485,13 +481,8 @@ class PolkascanHarvesterService(BaseService):
         digest_logs = []
         for idx, log_data in enumerate(header.get('digest', {}).get('logs', [])):
             digest_logs.append(log_data.data.to_hex())
-        # Convert block number to numeric
-        # if not block_id.isnumeric():
-        #     block_id = int(block_id, 16)
 
         # ==== Get block runtime from Substrate ==================
-
-        self.substrate.init_runtime(block_hash=block_hash)
 
         self.process_metadata(self.substrate.runtime_version, block_hash)
 
@@ -652,7 +643,7 @@ class PolkascanHarvesterService(BaseService):
                 version_info = '84'
                 address = value.get('address').replace('0x', '')
             if extrinsic_hash is not None:
-                extrinsic_hash = extrinsic_hash[2:]  # replace '0x'
+                extrinsic_hash = extrinsic_hash[2:] # replace '0x'
 
             model = Extrinsic(
                 block_id=block_id,
@@ -828,20 +819,14 @@ class PolkascanHarvesterService(BaseService):
     def integrity_checks(self):
 
         # 1. Check finalized head
-        substrate = SubstrateInterface(
-            url=settings.SUBSTRATE_RPC_URL,
-            runtime_config=RuntimeConfiguration(),
-            type_registry_preset=settings.TYPE_REGISTRY
-        )
-
         if settings.FINALIZATION_BY_BLOCK_CONFIRMATIONS > 0:
-            finalized_block_hash = substrate.get_chain_head()
+            finalized_block_hash = self.substrate.get_chain_head()
             finalized_block_number = max(
-                substrate.get_block_number(finalized_block_hash) - settings.FINALIZATION_BY_BLOCK_CONFIRMATIONS, 0
+                self.substrate.get_block_number(finalized_block_hash) - settings.FINALIZATION_BY_BLOCK_CONFIRMATIONS, 0
             )
         else:
-            finalized_block_hash = substrate.get_chain_finalised_head()
-            finalized_block_number = substrate.get_block_number(finalized_block_hash)
+            finalized_block_hash = self.substrate.get_chain_finalised_head()
+            finalized_block_number = self.substrate.get_block_number(finalized_block_hash)
 
         # 2. Check integrity head
         integrity_head = Status.get_status(self.db_session, 'INTEGRITY_HEAD')
@@ -873,7 +858,7 @@ class PolkascanHarvesterService(BaseService):
                         if block.id != parent_block.id + 1:
 
                             # Save integrity head if block hash of parent matches with hash in node
-                            if parent_block.hash == substrate.get_block_hash(integrity_head.value):
+                            if parent_block.hash == self.substrate.get_block_hash(integrity_head.value):
                                 integrity_head.save(self.db_session)
                                 self.db_session.commit()
 
@@ -888,8 +873,8 @@ class PolkascanHarvesterService(BaseService):
                             self.remove_block(parent_block.hash)
                             self.db_session.commit()
 
-                            self.add_block(substrate.get_block_hash(block.id))
-                            self.add_block(substrate.get_block_hash(parent_block.id))
+                            self.add_block(self.substrate.get_block_hash(block.id))
+                            self.add_block(self.substrate.get_block_hash(parent_block.id))
                             self.db_session.commit()
 
                             integrity_head.value = parent_block.id - 1
@@ -910,7 +895,7 @@ class PolkascanHarvesterService(BaseService):
                         break
 
             if parent_block:
-                if parent_block.hash == substrate.get_block_hash(int(integrity_head.value)):
+                if parent_block.hash == self.substrate.get_block_hash(int(integrity_head.value)):
                     integrity_head.save(self.db_session)
                     self.db_session.commit()
 
@@ -1064,7 +1049,7 @@ class PolkascanHarvesterService(BaseService):
         )
 
         if storage_method:
-            if storage_method.type['MapType']['hasher'] == "Blake2_128Concat":
+            if storage_method.type['Map']['hasher'] == "Blake2_128Concat":
 
                 # get balances storage prefix
                 storage_key_prefix = self.substrate.generate_storage_hash(
