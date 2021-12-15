@@ -1,6 +1,6 @@
+from app.models.data import AccountIndexAudit
 from app.processors.base import EventProcessor
 from app.settings import ACCOUNT_INDEX_AUDIT_TYPE_NEW
-from app.models.data import AccountIndexAudit
 
 
 class IndexAssignedEventProcessor(EventProcessor):

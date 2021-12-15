@@ -1,7 +1,6 @@
-from app.processors.base import EventProcessor
-
 from app import settings
 from app.models.data import AccountAudit
+from app.processors.base import EventProcessor
 from app.settings import ACCOUNT_AUDIT_TYPE_NEW
 
 

@@ -1,6 +1,6 @@
+from app.models.data import Account
 from app.processors.base import EventProcessor
 from app.settings import SEARCH_INDEX_COUNCIL_MEMBER_ELECTED
-from app.models.data import Account
 
 
 class CouncilNewTermEventProcessor(EventProcessor):
