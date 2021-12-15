@@ -14,4 +14,3 @@ class StakingBonded(EventProcessor):
         )
 
         search_index.save(db_session)
-

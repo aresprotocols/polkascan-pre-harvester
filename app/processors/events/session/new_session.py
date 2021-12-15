@@ -1,10 +1,11 @@
+from scalecodec.base import ScaleBytes
+from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
+from substrateinterface import SubstrateInterface
+
 from app import settings, utils
 from app.models.data import Session, SessionValidator, SessionTotal, Account, SessionNominator, RuntimeStorage
 from app.processors.base import EventProcessor
 from app.settings import LEGACY_SESSION_VALIDATOR_LOOKUP, SUBSTRATE_METADATA_VERSION
-from scalecodec.base import ScaleBytes
-from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
-from substrateinterface import SubstrateInterface
 
 
 class NewSessionEventProcessor(EventProcessor):

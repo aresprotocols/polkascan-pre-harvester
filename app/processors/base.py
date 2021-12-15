@@ -21,6 +21,7 @@ from app.models.data import SearchIndex
 from substrateinterface import SubstrateInterface
 from scalecodec.types import ss58_decode
 
+
 class BaseService(object):
     pass
 
@@ -35,7 +36,6 @@ class Singleton(type):
 
 
 class ProcessorRegistry(metaclass=Singleton):
-
     registry = {'event': {}, 'extrinsic': {}, 'block': []}
 
     @classmethod
@@ -129,7 +129,6 @@ class Processor(object):
 
 
 class EventProcessor(Processor):
-
     module_id = None
     event_id = None
 
@@ -165,7 +164,6 @@ class EventProcessor(Processor):
 
 
 class ExtrinsicProcessor(Processor):
-
     module_id = None
     call_id = None
 

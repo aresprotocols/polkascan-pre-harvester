@@ -57,3 +57,11 @@ from .events.staking.withdrawn import *
 
 from .events.system.new_account import *
 from .events.system.killed_account import *
+
+from .blocks.account import *
+from .blocks.account_index import *
+from .blocks.account_info import *
+from .blocks.block_total import *
+from .blocks.identity import *
+from .blocks.identity_judgement import *
+from .blocks.log import *
