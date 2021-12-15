@@ -33,6 +33,14 @@ from .events.council.voted import *
 
 from .events.democracy.proposed import *
 
+from .events.identity.identity_cleared import *
+from .events.identity.identity_killed import *
+from .events.identity.identity_set import *
+from .events.identity.judgement_given import *
+from .events.identity.judgement_requested import *
+from .events.identity.judgement_unrequested import *
+from .events.identity.registrar_added import *
+
 from .events.imonline.heartbeat_received import *
 from .events.imonline.offline import *
 
