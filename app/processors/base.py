@@ -18,7 +18,8 @@
 #
 #  base.py
 from app.models.data import SearchIndex
-
+from substrateinterface import SubstrateInterface
+from scalecodec.types import ss58_decode
 
 class BaseService(object):
     pass
@@ -132,7 +133,7 @@ class EventProcessor(Processor):
     module_id = None
     event_id = None
 
-    def __init__(self, block, event, extrinsic=None, metadata=None, substrate=None):
+    def __init__(self, block, event, extrinsic=None, metadata=None, substrate: SubstrateInterface = None):
         self.block = block
         self.event = event
         self.extrinsic = extrinsic
@@ -140,6 +141,13 @@ class EventProcessor(Processor):
         self.substrate = substrate
 
     def add_search_index(self, index_type_id, account_id=None, sorting_value=None):
+        # ss58_format = self.substrate.ss58_format
+        # if account_id is not None and ss58_format is not None and account_id[0:2] != '0x':
+        #     try:
+        #         account_id = ss58_decode(account_id, ss58_format)
+        #     except Exception as e:
+        #         print("add_search_index ss58_decode account_id: {}, error: {}".format(account_id, e))
+
         return SearchIndex(
             index_type_id=index_type_id,
             block_id=self.block.id,
@@ -151,16 +159,6 @@ class EventProcessor(Processor):
 
     def process_search_index(self, db_session):
         pass
-
-    def add_search_index(self, index_type_id, account_id=None, sorting_value=None):
-        return SearchIndex(
-            index_type_id=index_type_id,
-            block_id=self.block.id,
-            event_idx=self.event.event_idx,
-            extrinsic_idx=self.event.extrinsic_idx,
-            account_id=account_id,
-            sorting_value=sorting_value
-        )
 
     def process_search_index(self, db_session):
         pass

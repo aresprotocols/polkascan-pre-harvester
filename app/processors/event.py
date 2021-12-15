@@ -20,7 +20,8 @@
 #
 from packaging import version
 from scalecodec.base import RuntimeConfiguration, ScaleBytes
-from app import settings
+from scalecodec.types import GenericStorageEntryMetadata, ss58_decode
+from app import settings, utils
 from app.models.data import Contract, Session, AccountAudit, \
     AccountIndexAudit, SessionTotal, SessionValidator, RuntimeStorage, \
     SessionNominator, IdentityAudit, IdentityJudgementAudit, Account
@@ -34,68 +35,62 @@ from app.settings import ACCOUNT_AUDIT_TYPE_NEW, ACCOUNT_AUDIT_TYPE_REAPED, ACCO
 from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
 from substrateinterface import SubstrateInterface
 from substrateinterface.exceptions import StorageFunctionNotFound
+import logging
 
 
 class NewSessionEventProcessor(EventProcessor):
-
     module_id = 'Session'
     event_id = 'NewSession'
 
     def add_session(self, db_session, session_id):
-
         nominators = []
+
+        substrate: SubstrateInterface = self.substrate
+        if self.substrate.metadata_decoder is None:
+            self.substrate.metadata_decoder = substrate.get_block_metadata(self.block.hash)
 
         # Retrieve current era
         try:
-            current_era = self.substrate.get_runtime_state(
-                module="Staking",
-                storage_function="CurrentEra",
-                params=[],
-                block_hash=self.block.hash
-            ).get('result')
-        except StorageFunctionNotFound:
+            current_era = utils.query_storage(pallet_name="Staking", storage_name="CurrentEra", substrate=substrate,
+                                              block_hash=self.block.hash).value
+        except Exception as e:
+            print("query current_era storage error:{}".format(e))
             current_era = None
 
         # Retrieve validators for new session from storage
         try:
-            validators = self.substrate.get_runtime_state(
-                module="Session",
-                storage_function="Validators",
-                params=[],
-                block_hash=self.block.hash
-            ).get('result', [])
-        except StorageFunctionNotFound:
+            validators = utils.query_storage(pallet_name="Session", storage_name="Validators", substrate=substrate,
+                                             block_hash=self.block.hash).value or []
+        except Exception as e:
+            print("query validators storage error:{}".format(e))
             validators = []
 
         for rank_nr, validator_account in enumerate(validators):
             validator_ledger = {}
             validator_session = None
 
+            # GenericAccountId
             validator_stash = validator_account.replace('0x', '')
 
             # Retrieve controller account
             try:
-                validator_controller = self.substrate.get_runtime_state(
-                    module="Staking",
-                    storage_function="Bonded",
-                    params=[validator_account],
-                    block_hash=self.block.hash
-                ).get('result')
-
+                validator_controller = utils.query_storage(pallet_name="Staking", storage_name="Bonded",
+                                                           substrate=substrate,
+                                                           block_hash=self.block.hash, params=[validator_account]).value
                 if validator_controller:
                     validator_controller = validator_controller.replace('0x', '')
-            except StorageFunctionNotFound:
+            except Exception as e:
+                print("query validator_controller storage error:{}".format(e))
                 validator_controller = None
 
             # Retrieve validator preferences for stash account
             try:
-                validator_prefs = self.substrate.get_runtime_state(
-                    module="Staking",
-                    storage_function="ErasValidatorPrefs",
-                    params=[current_era, validator_account],
-                    block_hash=self.block.hash
-                ).get('result')
-            except StorageFunctionNotFound:
+                validator_prefs = utils.query_storage(pallet_name="Staking", storage_name="ErasValidatorPrefs",
+                                                      substrate=substrate,
+                                                      block_hash=self.block.hash,
+                                                      params=[current_era, validator_account]).value
+            except Exception as e:
+                print("query validator_prefs storage error:{}".format(e))
                 validator_prefs = None
 
             if not validator_prefs:
@@ -103,13 +98,12 @@ class NewSessionEventProcessor(EventProcessor):
 
             # Retrieve bonded
             try:
-                exposure = self.substrate.get_runtime_state(
-                    module="Staking",
-                    storage_function="ErasStakers",
-                    params=[current_era, validator_account],
-                    block_hash=self.block.hash
-                ).get('result')
-            except StorageFunctionNotFound:
+                exposure = utils.query_storage(pallet_name="Staking", storage_name="ErasStakers",
+                                               substrate=substrate,
+                                               block_hash=self.block.hash,
+                                               params=[current_era, validator_account]).value
+            except Exception as e:
+                print("query exposure storage error:{}".format(e))
                 exposure = None
 
             if not exposure:
@@ -211,7 +205,11 @@ class NewSessionEventProcessor(EventProcessor):
             Account.id.in_(nominators), Account.is_nominator == False
         ).update({Account.is_nominator: True}, synchronize_session='fetch')
 
+    # for old version
     def add_session_old(self, db_session, session_id):
+        """
+            new_version use add_session instead of
+        """
         current_era = None
         validators = []
         nominators = []
@@ -519,13 +517,8 @@ class NewSessionEventProcessor(EventProcessor):
 
     def process_search_index(self, db_session):
         try:
-            validators = self.substrate.get_runtime_state(
-                module="Session",
-                storage_function="Validators",
-                params=[],
-                block_hash=self.block.hash
-            ).get('result', [])
-
+            validators = utils.query_storage(pallet_name="Session", storage_name="Validators", substrate=self.substrate,
+                                             block_hash=self.block.hash).value
             # Add search indices for validators sessions
             for account_id in validators:
                 search_index = self.add_search_index(
@@ -539,18 +532,16 @@ class NewSessionEventProcessor(EventProcessor):
 
 
 class NewAccountEventProcessor(EventProcessor):
-
     module_id = 'Balances'
     event_id = 'NewAccount'
 
     def accumulation_hook(self, db_session):
-
+        print("new_balance")
         # Check event requirements
         if len(self.event.attributes) == 2 and \
                 self.event.attributes[0]['type'] == 'AccountId' and self.event.attributes[1]['type'] == 'Balance':
-
-            account_id = self.event.attributes[0]['value'].replace('0x', '')
-            balance = self.event.attributes[1]['value']
+            account_id = self.event.attributes[0].replace('0x', '')
+            balance = self.event.attributes[1]
 
             self.block._accounts_new.append(account_id)
 
@@ -571,23 +562,21 @@ class NewAccountEventProcessor(EventProcessor):
     def process_search_index(self, db_session):
         search_index = self.add_search_index(
             index_type_id=settings.SEARCH_INDEX_ACCOUNT_CREATED,
-            account_id=self.event.attributes[0]['value'].replace('0x', '')
+            account_id=self.event.attributes[0].replace('0x', '')
         )
 
         search_index.save(db_session)
 
 
 class SystemNewAccountEventProcessor(EventProcessor):
-
     module_id = 'System'
     event_id = 'NewAccount'
 
     def accumulation_hook(self, db_session):
-
+        print("new Account")
         # Check event requirements
         if len(self.event.attributes) == 1 and \
                 self.event.attributes[0]['type'] == 'AccountId':
-
             account_id = self.event.attributes[0]['value'].replace('0x', '')
 
             self.block._accounts_new.append(account_id)
@@ -711,21 +700,19 @@ class KilledAccount(EventProcessor):
     def process_search_index(self, db_session):
         search_index = self.add_search_index(
             index_type_id=settings.SEARCH_INDEX_ACCOUNT_KILLED,
-            account_id=self.event.attributes[0]['value'].replace('0x', '')
+            account_id=self.event.attributes[0].replace('0x', '')
         )
 
         search_index.save(db_session)
 
 
 class NewAccountIndexEventProcessor(EventProcessor):
-
     module_id = 'Indices'
     event_id = 'NewAccountIndex'
 
     def accumulation_hook(self, db_session):
-
-        account_id = self.event.attributes[0]['value'].replace('0x', '')
-        id = self.event.attributes[1]['value']
+        account_id = self.event.attributes[0].replace('0x', '')
+        id = self.event.attributes[1]
 
         account_index_audit = AccountIndexAudit(
             account_index_id=id,
@@ -744,12 +731,10 @@ class NewAccountIndexEventProcessor(EventProcessor):
 
 
 class IndexAssignedEventProcessor(EventProcessor):
-
     module_id = 'Indices'
     event_id = 'IndexAssigned'
 
     def accumulation_hook(self, db_session):
-
         account_id = self.event.attributes[0]['value'].replace('0x', '')
         id = self.event.attributes[1]['value']
 
@@ -770,12 +755,10 @@ class IndexAssignedEventProcessor(EventProcessor):
 
 
 class IndexFreedEventProcessor(EventProcessor):
-
     module_id = 'Indices'
     event_id = 'IndexFreed'
 
     def accumulation_hook(self, db_session):
-
         account_index = self.event.attributes[0]['value']
 
         new_account_index_audit = AccountIndexAudit(
@@ -795,12 +778,10 @@ class IndexFreedEventProcessor(EventProcessor):
 
 
 class ProposedEventProcessor(EventProcessor):
-
     module_id = 'Democracy'
     event_id = 'Proposed'
 
     def process_search_index(self, db_session):
-
         search_index = self.add_search_index(
             index_type_id=settings.SEARCH_INDEX_DEMOCRACY_PROPOSE,
             account_id=self.extrinsic.address,
@@ -811,12 +792,10 @@ class ProposedEventProcessor(EventProcessor):
 
 
 class TechCommProposedEventProcessor(EventProcessor):
-
     module_id = 'Technicalcommittee'
     event_id = 'Proposed'
 
     def process_search_index(self, db_session):
-
         search_index = self.add_search_index(
             index_type_id=settings.SEARCH_INDEX_TECHCOMM_PROPOSED,
             account_id=self.extrinsic.address
@@ -826,12 +805,10 @@ class TechCommProposedEventProcessor(EventProcessor):
 
 
 class TechCommVotedEventProcessor(EventProcessor):
-
     module_id = 'Technicalcommittee'
     event_id = 'Voted'
 
     def process_search_index(self, db_session):
-
         search_index = self.add_search_index(
             index_type_id=settings.SEARCH_INDEX_TECHCOMM_VOTED,
             account_id=self.extrinsic.address
@@ -841,7 +818,6 @@ class TechCommVotedEventProcessor(EventProcessor):
 
 
 class TreasuryAwardedEventProcessor(EventProcessor):
-
     module_id = 'Treasury'
     event_id = 'Awarded'
 
@@ -856,7 +832,6 @@ class TreasuryAwardedEventProcessor(EventProcessor):
 
 
 class CodeStoredEventProcessor(EventProcessor):
-
     module_id = 'Contract'
     event_id = 'CodeStored'
 
@@ -883,12 +858,10 @@ class CodeStoredEventProcessor(EventProcessor):
 
 
 class SlashEventProcessor(EventProcessor):
-
     module_id = 'Staking'
     event_id = 'Slash'
 
     def process_search_index(self, db_session):
-
         search_index = self.add_search_index(
             index_type_id=SEARCH_INDEX_SLASHED_ACCOUNT,
             account_id=self.event.attributes[0]['value'].replace('0x', ''),
@@ -905,16 +878,16 @@ class BalancesTransferProcessor(EventProcessor):
     def process_search_index(self, db_session):
         search_index = self.add_search_index(
             index_type_id=SEARCH_INDEX_BALANCETRANSFER,
-            account_id=self.event.attributes[0].replace('0x', ''),
-            sorting_value=self.event.attributes[2]
+            account_id=self.event.attributes[0]['value'].replace('0x', ''),
+            sorting_value=self.event.attributes[2]['value']
         )
 
         search_index.save(db_session)
 
         search_index = self.add_search_index(
             index_type_id=SEARCH_INDEX_BALANCETRANSFER,
-            account_id=self.event.attributes[1].replace('0x', ''),
-            sorting_value=self.event.attributes[2]
+            account_id=self.event.attributes[1]['value'].replace('0x', ''),
+            sorting_value=self.event.attributes[2]['value']
         )
 
         search_index.save(db_session)
@@ -935,12 +908,10 @@ class BalancesDeposit(EventProcessor):
 
 
 class HeartbeatReceivedEventProcessor(EventProcessor):
-
     module_id = 'imonline'
     event_id = 'HeartbeatReceived'
 
     def process_search_index(self, db_session):
-
         search_index = self.add_search_index(
             index_type_id=SEARCH_INDEX_HEARTBEATRECEIVED,
             # account_id=self.event.attributes[0]['value'].replace('0x', ''),
@@ -952,14 +923,11 @@ class HeartbeatReceivedEventProcessor(EventProcessor):
 
 
 class SomeOffline(EventProcessor):
-
     module_id = 'imonline'
     event_id = 'SomeOffline'
 
     def process_search_index(self, db_session):
-
         for item in self.event.attributes[0]['value']:
-
             search_index = self.add_search_index(
                 index_type_id=settings.SEARCH_INDEX_IMONLINE_SOMEOFFLINE,
                 account_id=item['validatorId'].replace('0x', ''),
@@ -970,7 +938,6 @@ class SomeOffline(EventProcessor):
 
 
 class IdentitySetEventProcessor(EventProcessor):
-
     module_id = 'identity'
     event_id = 'IdentitySet'
 
@@ -1022,7 +989,6 @@ class IdentitySetEventProcessor(EventProcessor):
 
 
 class IdentityClearedEventProcessor(EventProcessor):
-
     module_id = 'identity'
     event_id = 'IdentityCleared'
 
@@ -1032,7 +998,6 @@ class IdentityClearedEventProcessor(EventProcessor):
         if len(self.event.attributes) == 2 and \
                 self.event.attributes[0]['type'] == 'AccountId' and \
                 self.event.attributes[1]['type'] == 'Balance':
-
             identity_audit = IdentityAudit(
                 account_id=self.event.attributes[0]['value'].replace('0x', ''),
                 block_id=self.event.block_id,
@@ -1057,7 +1022,6 @@ class IdentityClearedEventProcessor(EventProcessor):
 
 
 class IdentityKilledEventProcessor(EventProcessor):
-
     module_id = 'identity'
     event_id = 'IdentityKilled'
 
@@ -1067,7 +1031,6 @@ class IdentityKilledEventProcessor(EventProcessor):
         if len(self.event.attributes) == 2 and \
                 self.event.attributes[0]['type'] == 'AccountId' and \
                 self.event.attributes[1]['type'] == 'Balance':
-
             identity_audit = IdentityAudit(
                 account_id=self.event.attributes[0]['value'].replace('0x', ''),
                 block_id=self.event.block_id,
@@ -1092,7 +1055,6 @@ class IdentityKilledEventProcessor(EventProcessor):
 
 
 class IdentityJudgementGivenEventProcessor(EventProcessor):
-
     module_id = 'identity'
     event_id = 'JudgementGiven'
 
@@ -1158,12 +1120,10 @@ class IdentityJudgementUnrequested(EventProcessor):
 
 
 class CouncilNewTermEventProcessor(EventProcessor):
-
     module_id = 'electionsphragmen'
     event_id = 'NewTerm'
 
     def sequencing_hook(self, db_session, parent_block, parent_sequenced_block):
-
         new_member_ids = [
             member_struct['account'].replace('0x', '') for member_struct in self.event.attributes[0]['value']
         ]
@@ -1181,7 +1141,6 @@ class CouncilNewTermEventProcessor(EventProcessor):
         ).update({Account.is_council_member: True}, synchronize_session='fetch')
 
     def process_search_index(self, db_session):
-
         for member_struct in self.event.attributes[0]['value']:
             search_index = self.add_search_index(
                 index_type_id=settings.SEARCH_INDEX_COUNCIL_MEMBER_ELECTED,
@@ -1193,12 +1152,10 @@ class CouncilNewTermEventProcessor(EventProcessor):
 
 
 class CouncilMemberKicked(EventProcessor):
-
     module_id = 'electionsphragmen'
     event_id = 'MemberKicked'
 
     def process_search_index(self, db_session):
-
         search_index = self.add_search_index(
             index_type_id=settings.SEARCH_INDEX_COUNCIL_MEMBER_KICKED,
             account_id=self.event.attributes[0]['value'].replace('0x', '')
@@ -1208,12 +1165,10 @@ class CouncilMemberKicked(EventProcessor):
 
 
 class CouncilMemberRenounced(EventProcessor):
-
     module_id = 'electionsphragmen'
     event_id = 'MemberRenounced'
 
     def process_search_index(self, db_session):
-
         search_index = self.add_search_index(
             index_type_id=settings.SEARCH_INDEX_COUNCIL_CANDIDACY_RENOUNCED,
             account_id=self.event.attributes[0]['value'].replace('0x', '')
@@ -1223,7 +1178,6 @@ class CouncilMemberRenounced(EventProcessor):
 
 
 class CouncilProposedEventProcessor(EventProcessor):
-
     module_id = 'council'
     event_id = 'Proposed'
 
@@ -1237,7 +1191,6 @@ class CouncilProposedEventProcessor(EventProcessor):
 
 
 class CouncilVotedEventProcessor(EventProcessor):
-
     module_id = 'council'
     event_id = 'Voted'
 
@@ -1251,12 +1204,10 @@ class CouncilVotedEventProcessor(EventProcessor):
 
 
 class RegistrarAddedEventProcessor(EventProcessor):
-
     module_id = 'identity'
     event_id = 'RegistrarAdded'
 
     def sequencing_hook(self, db_session, parent_block, parent_sequenced_block):
-
         registrars = self.substrate.get_runtime_state(
             module="Identity",
             storage_function="Registrars",
@@ -1282,7 +1233,6 @@ class RegistrarAddedEventProcessor(EventProcessor):
 
 
 class StakingBonded(EventProcessor):
-
     module_id = 'staking'
     event_id = 'Bonded'
 
@@ -1297,7 +1247,6 @@ class StakingBonded(EventProcessor):
 
 
 class StakingUnbonded(EventProcessor):
-
     module_id = 'staking'
     event_id = 'Unbonded'
 
@@ -1312,7 +1261,6 @@ class StakingUnbonded(EventProcessor):
 
 
 class StakingWithdrawn(EventProcessor):
-
     module_id = 'staking'
     event_id = 'Withdrawn'
 

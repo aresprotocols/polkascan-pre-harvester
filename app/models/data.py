@@ -330,7 +330,7 @@ class SessionValidator(BaseModel):
     rank_validator = sa.Column(sa.Integer(), primary_key=True, autoincrement=False, index=True)
     validator_stash = sa.Column(sa.String(64), index=True)
     validator_controller = sa.Column(sa.String(64), index=True)
-    validator_session = sa.Column(sa.String(64), index=True)
+    validator_session = sa.Column(sa.JSON(), default=None, server_default=None, nullable=True)
     bonded_total = sa.Column(sa.Numeric(precision=65, scale=0))
     bonded_active = sa.Column(sa.Numeric(precision=65, scale=0))
     bonded_nominators = sa.Column(sa.Numeric(precision=65, scale=0))
@@ -528,6 +528,21 @@ class RuntimeStorage(BaseModel):
     def serialize_id(self):
         return '{}-{}-{}'.format(self.spec_version, self.module_id, self.name)
 
+    def get_types(self):
+        r = []
+        if self.type_key1 is not None:
+            r = [self.type_key1]
+        if self.type_key2 is not None:
+            r.append(self.type_key2)
+        return r
+
+    def get_hashers(self):
+        r = []
+        if self.type_hasher is not None:
+            r = [self.type_hasher]
+        if self.type_key2hasher is not None:
+            r.append(self.type_key2hasher)
+        return r
 
 class RuntimeConstant(BaseModel):
     __tablename__ = 'runtime_constant'

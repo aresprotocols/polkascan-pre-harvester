@@ -22,6 +22,7 @@ import logging
 import math
 from typing import Optional
 from scalecodec.base import ScaleBytes, ScaleDecoder, RuntimeConfiguration
+from scalecodec.types import GenericAccountId, H256, GenericRegistryType
 from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
 from scalecodec.type_registry import load_type_registry_file, load_type_registry_preset
 from sqlalchemy import func, distinct
@@ -30,7 +31,7 @@ from substrateinterface import SubstrateInterface, logger
 from substrateinterface.exceptions import SubstrateRequestException
 from substrateinterface.utils.hasher import xxh128
 
-from app import settings
+from app import settings, utils
 from app.models.data import Extrinsic, Block, Event, Runtime, RuntimeModule, RuntimeCall, RuntimeCallParam, \
     RuntimeEvent, RuntimeEventAttribute, RuntimeType, RuntimeStorage, BlockTotal, RuntimeConstant, AccountAudit, \
     AccountIndexAudit, ReorgBlock, ReorgExtrinsic, ReorgEvent, ReorgLog, RuntimeErrorMessage, Account, \
@@ -51,6 +52,31 @@ class AresSubstrateInterface(SubstrateInterface):
         if self.metadata_decoder:
             return self.metadata_decoder.portable_registry is not None
         return False
+
+
+# Copy GenericAccountId
+class AresGenericAccountId(H256):
+    def __init__(self, data=None, **kwargs):
+        self.public_key = None
+        super().__init__(data, **kwargs)
+
+    def process_encode(self, value):
+        if value[0:2] != '0x':
+            # from scalecodec.utils.ss58 import ss58_decode
+            # self.ss58_address = value
+            value = '0x{}'.format(value)
+        return super().process_encode(value)
+
+    def serialize(self):
+        return self.value
+
+    def process(self):
+        value = self.public_key = super().process()
+        return value
+
+    @classmethod
+    def process_scale_info_definition(cls, scale_info_definition: 'GenericRegistryType', prefix: str):
+        return
 
 
 class HarvesterCouldNotAddBlock(Exception):
@@ -184,12 +210,8 @@ class PolkascanHarvesterService(BaseService):
         # Check for sudo accounts
         try:
             # Update sudo key
-            sudo_key = self.substrate.get_runtime_state(
-                module='Sudo',
-                storage_function='Key',
-                block_hash=block.hash
-            ).get('result')
-
+            sudo_key = utils.query_storage(pallet_name="Sudo", storage_name="Key", substrate=self.substrate,
+                                           block_hash=block.hash).value
             account_audit = AccountAudit(
                 account_id=sudo_key.replace('0x', ''),
                 block_id=block.id,
@@ -208,6 +230,8 @@ class PolkascanHarvesterService(BaseService):
             block=block, event=Event(), substrate=self.substrate
         )
 
+        print("NEW_SESSION_EVENT_HANDLER: {}".format(
+            settings.get_versioned_setting('NEW_SESSION_EVENT_HANDLER', block.spec_version_id)))
         if settings.get_versioned_setting('NEW_SESSION_EVENT_HANDLER', block.spec_version_id):
             initial_session_event.add_session(db_session=self.db_session, session_id=0)
         else:
@@ -457,6 +481,7 @@ class PolkascanHarvesterService(BaseService):
                     runtime_type.save(self.db_session)
 
                 savepoint.commit()
+                self.db_session.commit()
                 # Put in local store
                 self.metadata_store[spec_version] = self.substrate.metadata_decoder
             except SQLAlchemyError as e:
@@ -643,7 +668,7 @@ class PolkascanHarvesterService(BaseService):
                 version_info = '84'
                 address = value.get('address').replace('0x', '')
             if extrinsic_hash is not None:
-                extrinsic_hash = extrinsic_hash[2:] # replace '0x'
+                extrinsic_hash = extrinsic_hash[2:]  # replace '0x'
 
             model = Extrinsic(
                 block_id=block_id,

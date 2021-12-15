@@ -201,7 +201,8 @@ class AccountBlockProcessor(BlockProcessor):
                         account.balance_reserved = account_info_data["data"]["reserved"]
                         account.balance_total = account_info_data["data"]["free"] + account_info_data["data"]["reserved"]
                         account.nonce = account_info_data["nonce"]
-                except ValueError:
+                except ValueError as e:
+                    print("ValueError: {}".format(e))
                     pass
 
                 # # If reaped but does not exist, create new account for now
