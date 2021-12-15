@@ -21,3 +21,5 @@
 from .block import *
 from .extrinsic import *
 from .event import *
+from .events.session.new_session import *
+from .events.system.new_account import *
