@@ -21,5 +21,16 @@
 from .block import *
 from .extrinsic import *
 from .event import *
+
 from .events.session.new_session import *
+
+from .events.balances.deposit import *
+from .events.balances.transfer import *
+
+from .events.staking.slash import *
+from .events.staking.bonded import *
+from .events.staking.unbonded import *
+from .events.staking.withdrawn import *
+
 from .events.system.new_account import *
+from .events.system.killed_account import *

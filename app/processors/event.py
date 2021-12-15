@@ -294,54 +294,6 @@ class CodeStoredEventProcessor(EventProcessor):
             db_session.delete(item)
 
 
-class SlashEventProcessor(EventProcessor):
-    module_id = 'Staking'
-    event_id = 'Slash'
-
-    def process_search_index(self, db_session):
-        search_index = self.add_search_index(
-            index_type_id=SEARCH_INDEX_SLASHED_ACCOUNT,
-            account_id=self.event.attributes[0]['value'].replace('0x', ''),
-            sorting_value=self.event.attributes[1]['value']
-        )
-
-        search_index.save(db_session)
-
-
-class BalancesTransferProcessor(EventProcessor):
-    module_id = 'Balances'
-    event_id = 'Transfer'
-
-    def process_search_index(self, db_session):
-        search_index = self.add_search_index(
-            index_type_id=SEARCH_INDEX_BALANCETRANSFER,
-            account_id=self.event.attributes[0]['value'].replace('0x', ''),
-            sorting_value=self.event.attributes[2]['value']
-        )
-
-        search_index.save(db_session)
-
-        search_index = self.add_search_index(
-            index_type_id=SEARCH_INDEX_BALANCETRANSFER,
-            account_id=self.event.attributes[1]['value'].replace('0x', ''),
-            sorting_value=self.event.attributes[2]['value']
-        )
-
-        search_index.save(db_session)
-
-
-class BalancesDeposit(EventProcessor):
-    module_id = 'Balances'
-    event_id = 'Deposit'
-
-    def process_search_index(self, db_session):
-        search_index = self.add_search_index(
-            index_type_id=settings.SEARCH_INDEX_BALANCES_DEPOSIT,
-            account_id=self.event.attributes[0]['value'].replace('0x', ''),
-            sorting_value=self.event.attributes[1]['value']
-        )
-
-        search_index.save(db_session)
 
 
 class HeartbeatReceivedEventProcessor(EventProcessor):
@@ -669,46 +621,6 @@ class RegistrarAddedEventProcessor(EventProcessor):
         ).update({Account.is_registrar: True}, synchronize_session='fetch')
 
 
-class StakingBonded(EventProcessor):
-    module_id = 'staking'
-    event_id = 'Bonded'
-
-    def process_search_index(self, db_session):
-        search_index = self.add_search_index(
-            index_type_id=settings.SEARCH_INDEX_STAKING_BONDED,
-            account_id=self.event.attributes[0]['value'].replace('0x', ''),
-            sorting_value=self.event.attributes[1]['value']
-        )
-
-        search_index.save(db_session)
-
-
-class StakingUnbonded(EventProcessor):
-    module_id = 'staking'
-    event_id = 'Unbonded'
-
-    def process_search_index(self, db_session):
-        search_index = self.add_search_index(
-            index_type_id=settings.SEARCH_INDEX_STAKING_UNBONDED,
-            account_id=self.event.attributes[0]['value'].replace('0x', ''),
-            sorting_value=self.event.attributes[1]['value']
-        )
-
-        search_index.save(db_session)
-
-
-class StakingWithdrawn(EventProcessor):
-    module_id = 'staking'
-    event_id = 'Withdrawn'
-
-    def process_search_index(self, db_session):
-        search_index = self.add_search_index(
-            index_type_id=settings.SEARCH_INDEX_STAKING_WITHDRAWN,
-            account_id=self.event.attributes[0].replace('0x', ''),
-            sorting_value=self.event.attributes[1]
-        )
-
-        search_index.save(db_session)
 
 
 class ClaimsClaimed(EventProcessor):
