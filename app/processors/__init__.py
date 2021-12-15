@@ -22,10 +22,25 @@ from .block import *
 from .extrinsic import *
 from .event import *
 
-from .events.session.new_session import *
-
 from .events.balances.deposit import *
 from .events.balances.transfer import *
+
+from .events.council.member_kicked import *
+from .events.council.member_renounced import *
+from .events.council.new_term import *
+from .events.council.proposed import *
+from .events.council.voted import *
+
+from .events.democracy.proposed import *
+
+from .events.imonline.heartbeat_received import *
+from .events.imonline.offline import *
+
+from .events.indices.index_assigned import *
+from .events.indices.index_freed import *
+from .events.indices.new_account import *
+
+from .events.session.new_session import *
 
 from .events.staking.slash import *
 from .events.staking.bonded import *
