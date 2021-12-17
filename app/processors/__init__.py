@@ -22,6 +22,14 @@ from .block import *
 from .extrinsic import *
 from .event import *
 
+from .blocks.account import *
+from .blocks.account_index import *
+from .blocks.account_info import *
+from .blocks.block_total import *
+from .blocks.identity import *
+from .blocks.identity_judgement import *
+from .blocks.log import *
+
 from .events.balances.deposit import *
 from .events.balances.transfer import *
 
@@ -58,10 +66,24 @@ from .events.staking.withdrawn import *
 from .events.system.new_account import *
 from .events.system.killed_account import *
 
-from .blocks.account import *
-from .blocks.account_index import *
-from .blocks.account_info import *
-from .blocks.block_total import *
-from .blocks.identity import *
-from .blocks.identity_judgement import *
-from .blocks.log import *
+from .extrinsics.democracy.proxy_vote import *
+from .extrinsics.democracy.second import *
+from .extrinsics.democracy.vote import *
+
+from .extrinsics.elections_phragmen.submit_candidacy import *
+from .extrinsics.elections_phragmen.vote import *
+
+from .extrinsics.staking.bond import *
+from .extrinsics.staking.bond_extra import *
+from .extrinsics.staking.chill import *
+from .extrinsics.staking.nominate import *
+from .extrinsics.staking.set_payee import *
+from .extrinsics.staking.unbond import *
+from .extrinsics.staking.validate import *
+from .extrinsics.staking.withdraw_unbonded import *
+
+from .extrinsics.treasury.propose_spend import *
+
+from .extrinsics.identity_set_subs import *
+from .extrinsics.sudo import *
+from .extrinsics.timestamp import *
