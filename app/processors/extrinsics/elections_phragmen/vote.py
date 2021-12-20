@@ -3,7 +3,7 @@ from app.settings import SEARCH_INDEX_COUNCIL_CANDIDACY_VOTE
 
 
 class ElectionsVote(ExtrinsicProcessor):
-    module_id = 'Electionsphragmen'
+    module_id = 'Elections'
     call_id = 'vote'
 
     def process_search_index(self, db_session):

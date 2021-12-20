@@ -3,7 +3,7 @@ from app.settings import SEARCH_INDEX_COUNCIL_CANDIDACY_RENOUNCED
 
 
 class CouncilMemberRenounced(EventProcessor):
-    module_id = 'electionsphragmen'
+    module_id = 'Elections'
     event_id = 'MemberRenounced'
 
     def process_search_index(self, db_session):

@@ -3,7 +3,7 @@ from app.settings import SEARCH_INDEX_COUNCIL_CANDIDACY_SUBMIT
 
 
 class ElectionsSubmitCandidacy(ExtrinsicProcessor):
-    module_id = 'Electionsphragmen'
+    module_id = 'Elections'
     call_id = 'submit_candidacy'
 
     def process_search_index(self, db_session):

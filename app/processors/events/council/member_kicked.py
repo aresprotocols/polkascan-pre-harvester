@@ -3,7 +3,7 @@ from app.settings import SEARCH_INDEX_COUNCIL_MEMBER_KICKED
 
 
 class CouncilMemberKicked(EventProcessor):
-    module_id = 'electionsphragmen'
+    module_id = 'Elections'
     event_id = 'MemberKicked'
 
     def process_search_index(self, db_session):

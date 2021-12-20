@@ -4,7 +4,7 @@ from app.settings import SEARCH_INDEX_COUNCIL_MEMBER_ELECTED
 
 
 class CouncilNewTermEventProcessor(EventProcessor):
-    module_id = 'electionsphragmen'
+    module_id = 'Elections'
     event_id = 'NewTerm'
 
     def sequencing_hook(self, db_session, parent_block, parent_sequenced_block):
@@ -13,15 +13,15 @@ class CouncilNewTermEventProcessor(EventProcessor):
         ]
 
         Account.query(db_session).filter(
-            Account.id.in_(new_member_ids), Account.was_council_member is False
+            Account.id.in_(new_member_ids), Account.was_council_member == False
         ).update({Account.was_council_member: True}, synchronize_session='fetch')
 
         Account.query(db_session).filter(
-            Account.id.notin_(new_member_ids), Account.is_council_member is True
+            Account.id.notin_(new_member_ids), Account.is_council_member == True
         ).update({Account.is_council_member: False}, synchronize_session='fetch')
 
         Account.query(db_session).filter(
-            Account.id.in_(new_member_ids), Account.is_council_member is False
+            Account.id.in_(new_member_ids), Account.is_council_member == False
         ).update({Account.is_council_member: True}, synchronize_session='fetch')
 
     def process_search_index(self, db_session):
