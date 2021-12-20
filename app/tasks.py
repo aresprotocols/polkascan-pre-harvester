@@ -176,6 +176,7 @@ def start_sequencer(self):
         try:
             result = harvester.start_sequencer()
         except Exception as e:
+            self.session.rollback()
             result = {'result': str(e)}
 
         sequencer_task.value = None
