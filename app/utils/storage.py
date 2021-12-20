@@ -44,7 +44,7 @@ def query_storage(pallet_name: str, storage_name: str, substrate: SubstrateInter
     param_types = storage_func.get_params_type_string()
     value_type = storage_func.get_value_type_string()
 
-    return query(substrate=substrate, pallet_name=pallet_name, storage_name=storage_name, param_types=param_types,
+    return query(substrate=substrate, pallet_name=module.value['storage']['prefix'], storage_name=storage_name, param_types=param_types,
                  param_hashers=storage_func.get_param_hashers(), params=params, value_type=value_type,
                  block_hash=block_hash)
 
