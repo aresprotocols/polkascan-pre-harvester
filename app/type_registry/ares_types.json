@@ -1,7 +1,5 @@
 {
   "types": {
-    "AccountId": "AresGenericAccountId",
-    "ValidatorId": "AccountId",
     "Keys": {
       "type": "struct",
       "type_mapping": [
@@ -19,7 +17,7 @@
       ]
     },
     "RawSolution": "RawSolutionWith16",
-    "OffchainSignature": "MultiSignature",
+    "Signature": "MultiSignature",
     "BalanceOf": "Balance",
     "FractionLength": "u32",
     "RequestInterval": "u8",

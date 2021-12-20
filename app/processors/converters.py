@@ -53,9 +53,20 @@ class AresSubstrateInterface(SubstrateInterface):
             return self.metadata_decoder.portable_registry is not None
         return False
 
+    def init_runtime(self, block_hash=None, block_id=None):
+        super().init_runtime(block_hash=block_hash, block_id=block_id)
+        self.ss58_format = None
+
 
 # Copy GenericAccountId
 class AresGenericAccountId(H256):
+    """
+        unuseful
+
+        "AccountId": "AresGenericAccountId",
+        "ValidatorId": "AccountId",
+        "sp_core::crypto::AccountId32": "AresGenericAccountId",
+    """
     def __init__(self, data=None, **kwargs):
         self.public_key = None
         super().__init__(data, **kwargs)
@@ -230,8 +241,6 @@ class PolkascanHarvesterService(BaseService):
             block=block, event=Event(), substrate=self.substrate
         )
 
-        print("NEW_SESSION_EVENT_HANDLER: {}".format(
-            settings.get_versioned_setting('NEW_SESSION_EVENT_HANDLER', block.spec_version_id)))
         if settings.get_versioned_setting('NEW_SESSION_EVENT_HANDLER', block.spec_version_id):
             initial_session_event.add_session(db_session=self.db_session, session_id=0)
         else:
@@ -659,7 +668,7 @@ class PolkascanHarvesterService(BaseService):
             signature = None
             if 'signature' in value:
                 t = value.get('signature')
-                signature = list(t.values())[0]
+                signature = list(t.values())[0].replace('0x', '')
 
             version_info = '04'
             extrinsic_hash = value.get('extrinsic_hash')
@@ -873,7 +882,7 @@ class PolkascanHarvesterService(BaseService):
         if start_block_id < end_block_id:
             # Continue integrity check
 
-            # print('== Start integrity checks from {} to {} =='.format(start_block_id, end_block_id))
+            print('== Start integrity checks from {} to {} =='.format(start_block_id, end_block_id))
 
             for block_nr in range(start_block_id, end_block_id, chunk_size):
                 # TODO replace limit with filter_by block range
@@ -918,6 +927,10 @@ class PolkascanHarvesterService(BaseService):
 
                     if block.id == end_block_id:
                         break
+
+                if integrity_head.value:
+                    integrity_head.save(self.db_session)
+                    self.db_session.commit()
 
             if parent_block:
                 if parent_block.hash == self.substrate.get_block_hash(int(integrity_head.value)):

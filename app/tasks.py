@@ -118,7 +118,7 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
 
     try:
 
-        for nr in range(0, 50):
+        for nr in range(0, 100):
             if not block or block.id > 0:
                 # Process block
                 block = harvester.add_block(block_hash)
@@ -170,6 +170,7 @@ def start_sequencer(self):
     if sequencer_task.value is None:
         sequencer_task.value = self.request.id
         sequencer_task.save(self.session)
+        self.session.commit()
 
         harvester = self.harvester
         try:
