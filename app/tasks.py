@@ -215,7 +215,7 @@ def start_harvester(self, check_gaps=True):
     if check_gaps:
         # Check for gaps between already harvested blocks and try to fill them first
         remaining_sets_result = Block.get_missing_block_ids(self.session)
-        print("query remaining sets:{}".format(remaining_sets_result))
+        print("query remaining sets:{}".format(remaining_sets_result.mappings().all()))
         for block_set in remaining_sets_result:
             end = int(block_set['block_from'])
             start = int(block_set['block_to'])
