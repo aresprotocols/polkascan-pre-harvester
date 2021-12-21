@@ -43,6 +43,7 @@ CELERY_BROKER = os.environ.get('CELERY_BROKER')
 CELERY_BACKEND = os.environ.get('CELERY_BACKEND')
 
 app = celery.Celery('tasks', broker=CELERY_BROKER, backend=CELERY_BACKEND)
+BLOCKS_LIMIT = 100
 
 app.conf.beat_schedule = {
     'check-head-10-seconds': {
@@ -118,7 +119,7 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
 
     try:
 
-        for nr in range(0, 100):
+        for nr in range(0, BLOCKS_LIMIT):
             if not block or block.id > 0:
                 # Process block
                 block = harvester.add_block(block_hash)
@@ -214,20 +215,27 @@ def start_harvester(self, check_gaps=True):
     if check_gaps:
         # Check for gaps between already harvested blocks and try to fill them first
         remaining_sets_result = Block.get_missing_block_ids(self.session)
-
+        print("query remaining sets:{}".format(remaining_sets_result))
         for block_set in remaining_sets_result:
-
-            # Get start and end block hash
-            end_block_hash = substrate.get_block_hash(int(block_set['block_from']))
-            start_block_hash = substrate.get_block_hash(int(block_set['block_to']))
-
-            # Start processing task
-            accumulate_block_recursive.delay(start_block_hash, end_block_hash)
-
-            block_sets.append({
-                'start_block_hash': start_block_hash,
-                'end_block_hash': end_block_hash
-            })
+            end = int(block_set['block_from'])
+            start = int(block_set['block_to'])
+            parallel = 1
+            if start - end > BLOCKS_LIMIT * 10:
+                parallel = 3
+            for i in range(parallel):
+                end = start - BLOCKS_LIMIT
+                # Get start and end block hash
+                end_block_hash = substrate.get_block_hash(end)
+                start_block_hash = substrate.get_block_hash(start)
+                # Start processing task
+                accumulate_block_recursive.delay(start_block_hash, end_block_hash)
+                block_sets.append({
+                    'start': start,
+                    'end': end,
+                    'start_block_hash': start_block_hash,
+                    'end_block_hash': end_block_hash
+                })
+                start = end + 1
 
     # Start sequencer
     sequencer_task = start_sequencer.delay()
