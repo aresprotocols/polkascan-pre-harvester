@@ -21,7 +21,7 @@ class AccountBlockProcessor(BlockProcessor):
 
         for account_audit in AccountAudit.query(db_session).filter_by(block_id=self.block.id).order_by('event_idx'):
             try:
-                account = Account.query(db_session).filter_by(id=account_audit.account_id).one()
+                account: Account = Account.query(db_session).filter_by(id=account_audit.account_id).one()
 
                 if account_audit.type_id == ACCOUNT_AUDIT_TYPE_REAPED:
                     account.count_reaped += 1
@@ -29,6 +29,17 @@ class AccountBlockProcessor(BlockProcessor):
 
                 elif account_audit.type_id == ACCOUNT_AUDIT_TYPE_NEW:
                     account.is_reaped = False
+                    
+                    if account_audit.data and account_audit.data.get('is_tech_comm_member') is True:
+                        account.is_tech_comm_member = True
+                        account.was_tech_comm_member = True
+
+                    if account_audit.data and account_audit.data.get('is_sudo') is True:
+                        account.is_sudo = True
+                        account.was_sudo = True
+
+                    if account_audit.data and account_audit.data.get('is_treasury') is True:
+                        account.is_treasury = True
 
                 account.updated_at_block = self.block.id
 
@@ -41,6 +52,8 @@ class AccountBlockProcessor(BlockProcessor):
                     is_treasury=(account_audit.data or {}).get('is_treasury', False),
                     is_sudo=(account_audit.data or {}).get('is_sudo', False),
                     was_sudo=(account_audit.data or {}).get('is_sudo', False),
+                    is_tech_comm_member=(account_audit.data or {}).get('is_tech_comm_member', False),
+                    was_tech_comm_member=(account_audit.data or {}).get('is_tech_comm_member', False),
                     created_at_block=self.block.id,
                     updated_at_block=self.block.id
                 )

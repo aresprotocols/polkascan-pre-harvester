@@ -21,10 +21,11 @@ import json
 import logging
 import math
 from typing import Optional
-from scalecodec.base import ScaleBytes, ScaleDecoder, RuntimeConfiguration
-from scalecodec.types import GenericAccountId, H256, GenericRegistryType
+
+from scalecodec.base import ScaleBytes, RuntimeConfiguration
 from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
-from scalecodec.type_registry import load_type_registry_file, load_type_registry_preset
+from scalecodec.type_registry import load_type_registry_file
+from scalecodec.types import H256, GenericRegistryType
 from sqlalchemy import func, distinct
 from sqlalchemy.exc import SQLAlchemyError
 from substrateinterface import SubstrateInterface, logger
@@ -67,6 +68,7 @@ class AresGenericAccountId(H256):
         "ValidatorId": "AccountId",
         "sp_core::crypto::AccountId32": "AresGenericAccountId",
     """
+
     def __init__(self, data=None, **kwargs):
         self.public_key = None
         super().__init__(data, **kwargs)
@@ -245,6 +247,24 @@ class PolkascanHarvesterService(BaseService):
             initial_session_event.add_session(db_session=self.db_session, session_id=0)
         else:
             initial_session_event.add_session_old(db_session=self.db_session, session_id=0)
+
+        # Retrieve technical committee members
+        members = utils.query_storage(pallet_name="TechnicalCommittee", storage_name="Members",
+                                      substrate=self.substrate,
+                                      block_hash=block.hash)
+
+        if members is not None:
+            members = [v.replace('0x', '') for v in members.value]
+            for account_id in members:
+                account_audit = AccountAudit(
+                    account_id=account_id,
+                    block_id=block.id,
+                    extrinsic_idx=None,
+                    event_idx=None,
+                    data={'is_tech_comm_member': True},
+                    type_id=settings.ACCOUNT_AUDIT_TYPE_NEW
+                )
+                account_audit.save(self.db_session)
 
     ###
     #  before process_metadata get_block had called init_runtime
