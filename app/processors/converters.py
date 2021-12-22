@@ -156,6 +156,9 @@ class PolkascanHarvesterService(BaseService):
 
                 account_audit.save(self.db_session)
 
+            block.count_accounts_new = len(genesis_accounts)
+            block.count_accounts = len(genesis_accounts)
+
         elif settings.get_versioned_setting('SUBSTRATE_STORAGE_INDICES', block.spec_version_id) == 'EnumSet':
 
             genesis_account_page_count = self.substrate.get_runtime_state(
@@ -569,6 +572,7 @@ class PolkascanHarvesterService(BaseService):
             count_events_finalization=0,
             count_events_module=0,
             count_events_system=0,
+            count_events_transfer=0,
             count_extrinsics_error=0,
             count_extrinsics_signed=0,
             count_extrinsics_signedby_address=0,
@@ -625,10 +629,12 @@ class PolkascanHarvesterService(BaseService):
                 )
 
                 # Process event
+                if model.module_id == 'balances' and model.event_id == 'Transfer':
+                    block.count_events_transfer += 1
 
-                if event.value['phase'] == 0:
+                if event.value_object['phase'].index == 0:
                     block.count_events_extrinsic += 1
-                elif event.value['phase'] == 1:
+                elif event.value_object['phase'].index == 1:
                     block.count_events_finalization += 1
 
                 if event.value['module_id'] == 'system':
@@ -820,7 +826,7 @@ class PolkascanHarvesterService(BaseService):
         # Delete block
         self.db_session.delete(block)
 
-    def sequence_block(self, block, parent_block_data=None, parent_sequenced_block_data=None):
+    def sequence_block(self, block: Block, parent_block_data=None, parent_sequenced_block_data=None):
 
         sequenced_block = BlockTotal(
             id=block.id

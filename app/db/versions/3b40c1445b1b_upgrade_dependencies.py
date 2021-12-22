@@ -34,7 +34,10 @@ def upgrade():
                     existing_type=mysql.VARCHAR(length=64),
                     type_=mysql.JSON,
                     existing_nullable=True)
-    # op.alter_column('data_account'('era', sa.String(length=20), nullable=True),
+    op.add_column('data_block', sa.Column('count_events_transfer', sa.Integer(), nullable=False))
+    op.add_column('data_reorg_block', sa.Column('count_events_transfer', sa.Integer(), nullable=False))
+    op.add_column('data_block_total',
+                  sa.Column('total_events_transfer', sa.Numeric(precision=65, scale=0), nullable=False))
 
 
 def downgrade():
@@ -58,3 +61,7 @@ def downgrade():
 
     op.create_index(op.f('ix_data_session_validator_validator_session'), 'data_session_validator',
                     ['validator_session'], unique=False)
+
+    op.drop_column('data_block', 'count_events_transfer')
+    op.drop_column('data_reorg_block', 'count_events_transfer')
+    op.drop_column('data_block_total', 'total_events_transfer')

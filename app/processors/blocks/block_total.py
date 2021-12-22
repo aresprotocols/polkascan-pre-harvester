@@ -48,6 +48,8 @@ class BlockTotalProcessor(BlockProcessor):
             parent_sequenced_block_data.get('total_events_extrinsic', 0)) + self.block.count_events_extrinsic
         self.sequenced_block.total_events_finalization = int(
             parent_sequenced_block_data.get('total_events_finalization', 0)) + self.block.count_events_finalization
+        self.sequenced_block.total_events_transfer = int(
+            parent_sequenced_block_data.get('total_events_transfer', 0)) + self.block.count_events_transfer
         self.sequenced_block.total_blocktime = int(
             parent_sequenced_block_data.get('total_blocktime', 0)) + self.sequenced_block.blocktime
         self.sequenced_block.total_accounts_new = int(

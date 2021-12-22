@@ -17,7 +17,7 @@
 #  along with Polkascan. If not, see <http://www.gnu.org/licenses/>.
 #
 #  base.py
-from app.models.data import SearchIndex
+from app.models.data import SearchIndex, BlockTotal, Block
 from substrateinterface import SubstrateInterface
 from scalecodec.types import ss58_decode
 
@@ -188,7 +188,7 @@ class ExtrinsicProcessor(Processor):
 
 class BlockProcessor(Processor):
 
-    def __init__(self, block, sequenced_block=None, substrate=None, harvester=None):
+    def __init__(self, block: Block, sequenced_block: BlockTotal = None, substrate=None, harvester=None):
         self.block = block
         self.sequenced_block = sequenced_block
         self.substrate = substrate
