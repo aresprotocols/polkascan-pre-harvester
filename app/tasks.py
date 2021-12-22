@@ -87,7 +87,6 @@ class BaseTask(celery.Task):
 
 @app.task(base=BaseTask, bind=True)
 def accumulate_block_recursive(self, block_hash, end_block_hash=None):
-
     harvester = self.harvester
 
     harvester.metadata_store = self.metadata_store
@@ -186,7 +185,7 @@ def start_sequencer(self):
         self.session.commit()
 
         # Check if analytics data need to be generated
-        #start_generate_analytics.delay()
+        # start_generate_analytics.delay()
 
         return result
     else:
@@ -208,7 +207,6 @@ def rebuilding_search_index(self, search_index_id=None, truncate=False):
 
 @app.task(base=BaseTask, bind=True)
 def start_harvester(self, check_gaps=True):
-
     substrate = self.harvester.substrate
 
     block_sets = []
@@ -225,6 +223,7 @@ def start_harvester(self, check_gaps=True):
                 parallel = 3
             for i in range(parallel):
                 end = start - BLOCKS_LIMIT
+                end = 0 if end < 0 else end
                 # Get start and end block hash
                 end_block_hash = substrate.get_block_hash(end)
                 start_block_hash = substrate.get_block_hash(start)
@@ -332,7 +331,6 @@ def rebuild_account_info_snapshot(self):
             }, synchronize_session='fetch'
         )
     self.session.commit()
-
 
     return {'result': 'account info snapshots rebuilt'}
 
