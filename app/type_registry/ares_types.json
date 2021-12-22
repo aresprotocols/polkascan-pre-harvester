@@ -17,7 +17,7 @@
       ]
     },
     "RawSolution": "RawSolutionWith16",
-    "Signature": "MultiSignature",
+    "OffchainSignature": "MultiSignature",
     "BalanceOf": "Balance",
     "FractionLength": "u32",
     "RequestInterval": "u8",
@@ -33,12 +33,13 @@
     },
     "PricePayloadSubPrice": "(Bytes, u64, FractionLength, JsonNumberValue)",
     "PricePayloadSubJumpBlock": "(Bytes, RequestInterval)",
-    "PricePayload<Public, BlockNumber>": {
+    "PricePayload<Public, BlockNumber, AuthorityAres>": {
       "type": "struct",
       "type_mapping": [
         ["block_number", "BlockNumber"],
         ["price", "Vec<PricePayloadSubPrice>"],
         ["jump_block", "Vec<PricePayloadSubJumpBlock>"],
+        ["auth", "AuthorityId"],
         ["public", "MultiSigner"]
       ]
     },
@@ -60,6 +61,7 @@
         ["block_number", "BlockNumber"],
         ["purchase_id", "Vec<u8>"],
         ["price", "Vec<PricePayloadSubPrice>"],
+        ["auth", "AuthorityId"],
         ["public", "AccountId"]
       ]
     },
@@ -69,6 +71,26 @@
         ["create_bn", "u64"],
         ["reached_type", "u8"],
         ["price_data", "(u64, FractionLength)"]
+      ]
+    },
+    "PreCheckPayload": {
+      "type": "struct",
+      "type_mapping": [
+        ["pre_check_stash", "AccountId"],
+        ["pre_check_auth", "AuthorityId"],
+        ["auth", "AuthorityId"],
+        ["block_number", "BlockNumber"],
+        ["public", "MultiSigner"]
+      ]
+    },
+    "PreCheckResultPayload": {
+      "type": "struct",
+      "type_mapping": [
+        ["pre_check_stash", "AccountId"],
+        ["pre_check_auth", "AuthorityId"],
+        ["block_number", "BlockNumber"],
+        ["pre_check_list", "Vec<PreCheckStruct>"],
+        ["public", "MultiSigner"]
       ]
     },
     "PurchasedDefaultData": {
