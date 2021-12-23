@@ -4,7 +4,8 @@
       "type": "struct",
       "type_mapping": [
         ["aura", "AccountId"],
-        ["grandpa", "AccountId"]
+        ["grandpa", "AccountId"],
+        ["ares", "AccountId"]
       ]
     },
     "WeightPerClass": {
@@ -43,7 +44,32 @@
         ["public", "MultiSigner"]
       ]
     },
-    "EraIndex": "u32",
+    "AresPriceData<AccountId, BlockNumber>": {
+      "type": "struct",
+      "type_mapping": [
+        ["price", "u64"],
+        ["account_id", "AuthorityId"],
+        ["create_bn", "BlockNumber"],
+        ["fraction_len", "FractionLength"],
+        ["raw_number", "JsonNumberValue"],
+        ["timestamp", "u64"]
+      ]
+    },
+    "HttpErrTracePayload<Public, BlockNumber, AuthorityId>": {
+      "type": "struct",
+      "type_mapping": [
+        ["trace_data", "HttpErrTraceData<BlockNumber, AuthorityId>"],
+        ["auth", "AuthorityId"],
+        ["public", "MultiSigner"]
+      ]
+    },
+    "HttpErrTraceData<BlockNumber, AuthorityId>": {
+      "type": "struct",
+      "type_mapping": [
+        ["block_number", "BlockNumber"],
+        ["err_auth", "AuthorityId"]
+      ]
+    },
     "PurchasedRequestData": {
       "type": "struct",
       "type_mapping": [
@@ -55,14 +81,14 @@
         ["request_keys", "Vec<Vec<u8>>"]
       ]
     },
-    "PurchasedPricePayload": {
+    "PurchasedPricePayload<Public, BlockNumber, AuthorityAres>": {
       "type": "struct",
       "type_mapping": [
         ["block_number", "BlockNumber"],
         ["purchase_id", "Vec<u8>"],
         ["price", "Vec<PricePayloadSubPrice>"],
         ["auth", "AuthorityId"],
-        ["public", "AccountId"]
+        ["public", "MultiSigner"]
       ]
     },
     "PurchasedAvgPriceData": {
