@@ -31,7 +31,7 @@
         ["exponent", "u32"]
       ]
     },
-    "PricePayloadSubPrice": "(Bytes, u64, FractionLength, JsonNumberValue)",
+    "PricePayloadSubPrice": "(Bytes, u64, FractionLength, JsonNumberValue, u64)",
     "PricePayloadSubJumpBlock": "(Bytes, RequestInterval)",
     "PricePayload<Public, BlockNumber, AuthorityAres>": {
       "type": "struct",
