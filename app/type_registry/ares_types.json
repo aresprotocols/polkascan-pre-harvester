@@ -55,15 +55,15 @@
         ["timestamp", "u64"]
       ]
     },
-    "HttpErrTracePayload<Public, BlockNumber, AuthorityId>": {
+    "HttpErrTracePayload<Public, BlockNumber, AuthorityAres>": {
       "type": "struct",
       "type_mapping": [
-        ["trace_data", "HttpErrTraceData<BlockNumber, AuthorityId>"],
+        ["trace_data", "HttpErrTraceData<BlockNumber, AuthorityAres>"],
         ["auth", "AuthorityId"],
         ["public", "MultiSigner"]
       ]
     },
-    "HttpErrTraceData<BlockNumber, AuthorityId>": {
+    "HttpErrTraceData<BlockNumber, AuthorityAres>": {
       "type": "struct",
       "type_mapping": [
         ["block_number", "BlockNumber"],
