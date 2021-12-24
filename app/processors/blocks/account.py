@@ -4,6 +4,7 @@ from scalecodec.types import ss58_encode
 from sqlalchemy.orm.exc import NoResultFound
 from substrateinterface.utils.hasher import blake2_256
 
+from app import utils
 from app.models.data import AccountAudit, Account, SearchIndex, AccountIndex
 from app.processors.base import BlockProcessor
 from app.settings import ACCOUNT_AUDIT_TYPE_REAPED, ACCOUNT_AUDIT_TYPE_NEW, SUBSTRATE_ADDRESS_TYPE
@@ -29,7 +30,7 @@ class AccountBlockProcessor(BlockProcessor):
 
                 elif account_audit.type_id == ACCOUNT_AUDIT_TYPE_NEW:
                     account.is_reaped = False
-                    
+
                     if account_audit.data and account_audit.data.get('is_tech_comm_member') is True:
                         account.is_tech_comm_member = True
                         account.was_tech_comm_member = True
@@ -65,23 +66,7 @@ class AccountBlockProcessor(BlockProcessor):
                     account.index_address = account_index.short_address
 
                 # Retrieve and set initial balance
-                try:
-                    account_info_data = self.substrate.get_runtime_state(
-                        module='System',
-                        storage_function='Account',
-                        params=['0x{}'.format(account.id)],
-                        block_hash=self.block.hash
-                    ).get('result')
-
-                    if account_info_data:
-                        account.balance_free = account_info_data["data"]["free"]
-                        account.balance_reserved = account_info_data["data"]["reserved"]
-                        account.balance_total = account_info_data["data"]["free"] + account_info_data["data"][
-                            "reserved"]
-                        account.nonce = account_info_data["nonce"]
-                except ValueError as e:
-                    print("ValueError: {}".format(e))
-                    pass
+                self.update_account_info(account)
 
                 # # If reaped but does not exist, create new account for now
                 # if account_audit.type_id != ACCOUNT_AUDIT_TYPE_NEW:
@@ -98,7 +83,6 @@ class AccountBlockProcessor(BlockProcessor):
                 SearchIndex.block_id == self.block.id,
                 SearchIndex.account_id.notin_(db_session.query(Account.id))
         ).distinct():
-
             account = Account(
                 id=search_index.account_id,
                 address=ss58_encode(search_index.account_id, SUBSTRATE_ADDRESS_TYPE),
@@ -106,21 +90,20 @@ class AccountBlockProcessor(BlockProcessor):
                 created_at_block=self.block.id,
                 updated_at_block=self.block.id
             )
-
-            try:
-                account_info_data = self.substrate.get_runtime_state(
-                    module='System',
-                    storage_function='Account',
-                    params=['0x{}'.format(account.id)],
-                    block_hash=self.block.hash
-                ).get('result')
-
-                if account_info_data:
-                    account.balance_free = account_info_data["data"]["free"]
-                    account.balance_reserved = account_info_data["data"]["reserved"]
-                    account.balance_total = account_info_data["data"]["free"] + account_info_data["data"]["reserved"]
-                    account.nonce = account_info_data["nonce"]
-            except ValueError:
-                pass
-
+            self.update_account_info(account)
             account.save(db_session)
+
+    def update_account_info(self, account: Account):
+        try:
+            account_info_data = utils.query_storage(pallet_name='System', storage_name='Account',
+                                                    substrate=self.substrate, params=['0x{}'.format(account.id)],
+                                                    block_hash=self.block.hash).value
+
+            if account_info_data:
+                account.balance_free = account_info_data["data"]["free"]
+                account.balance_reserved = account_info_data["data"]["reserved"]
+                account.balance_total = account_info_data["data"]["free"] + account_info_data["data"]["reserved"]
+                account.nonce = account_info_data["nonce"]
+        except ValueError as e:
+            print("ValueError: {}".format(e))
+            pass
