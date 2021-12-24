@@ -18,10 +18,10 @@ class TreasuryProposeSpend(ExtrinsicProcessor):
 
             # Add Beneficiary
 
-            search_index = self.add_search_index(
-                index_type_id=SEARCH_INDEX_TREASURY_PROPOSED,
-                account_id=self.extrinsic.params[1]['value'].replace('0x', ''),
-                sorting_value=self.extrinsic.params[0]['value']
-            )
-
-            search_index.save(db_session)
+            # search_index = self.add_search_index(
+            #     index_type_id=SEARCH_INDEX_TREASURY_PROPOSED,
+            #     account_id=self.extrinsic.params[1]['value'].replace('0x', ''),
+            #     sorting_value=self.extrinsic.params[0]['value']
+            # )
+            #
+            # search_index.save(db_session)

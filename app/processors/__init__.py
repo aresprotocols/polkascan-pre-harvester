@@ -66,6 +66,12 @@ from .events.staking.withdrawn import *
 from .events.system.new_account import *
 from .events.system.killed_account import *
 
+from .events.tech_comm.proposed import *
+from .events.tech_comm.voted import *
+
+from .events.treasury.awarded import *
+from .events.treasury.deposit import *
+
 from .extrinsics.democracy.proxy_vote import *
 from .extrinsics.democracy.second import *
 from .extrinsics.democracy.vote import *
