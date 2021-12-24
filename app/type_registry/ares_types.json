@@ -67,7 +67,9 @@
       "type": "struct",
       "type_mapping": [
         ["block_number", "BlockNumber"],
-        ["err_auth", "AuthorityId"]
+        ["err_auth", "AuthorityId"],
+        ["err_status", "HttpError"],
+        ["tip", "Bytes"]
       ]
     },
     "PurchasedRequestData": {
@@ -79,6 +81,14 @@
         ["submit_threshold", "u8"],
         ["max_duration", "u64"],
         ["request_keys", "Vec<Vec<u8>>"]
+      ]
+    },
+    "HttpError": {
+      "_enum": [
+        "IoErr",
+        "TimeOut",
+        "StatusErr(u16)",
+        "ParseErr"
       ]
     },
     "PurchasedPricePayload<Public, BlockNumber, AuthorityAres>": {
