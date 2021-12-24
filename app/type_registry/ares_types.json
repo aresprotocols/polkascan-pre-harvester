@@ -84,7 +84,8 @@
       ]
     },
     "HttpError": {
-      "_enum": [
+      "type": "enum",
+      "type_mapping": [
         "IoErr",
         "TimeOut",
         "StatusErr(u16)",
