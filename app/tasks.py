@@ -19,25 +19,19 @@
 #  tasks.py
 
 import os
-from time import sleep
 
 import celery
 from celery.result import AsyncResult
+from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 from app import settings
-from scalecodec.base import ScaleDecoder, ScaleBytes, RuntimeConfiguration
-
-from sqlalchemy import create_engine, text, distinct
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy.sql import func
-
-from app.models.data import Extrinsic, Block, BlockTotal, Account, AccountInfoSnapshot, SearchIndex
+from app.models.data import Block, Account, AccountInfoSnapshot, SearchIndex
 from app.models.harvester import Status
-from app.processors.converters import PolkascanHarvesterService, HarvesterCouldNotAddBlock, BlockAlreadyAdded, \
-    BlockIntegrityError
-
-from app.settings import DB_CONNECTION, DEBUG, SUBSTRATE_RPC_URL, TYPE_REGISTRY, FINALIZATION_ONLY, TYPE_REGISTRY_FILE
+from app.processors.converters import PolkascanHarvesterService, HarvesterCouldNotAddBlock, BlockAlreadyAdded
+from app.settings import DB_CONNECTION, DEBUG, TYPE_REGISTRY, FINALIZATION_ONLY, TYPE_REGISTRY_FILE, \
+    MAXIMUM_THREAD
 
 CELERY_BROKER = os.environ.get('CELERY_BROKER')
 CELERY_BACKEND = os.environ.get('CELERY_BACKEND')
@@ -219,8 +213,8 @@ def start_harvester(self, check_gaps=True):
             end = int(block_set['block_from'])
             start = int(block_set['block_to'])
             parallel = 1
-            if start - end > BLOCKS_LIMIT * 10:
-                parallel = 3
+            if len(remaining_sets_result) == 1 and start - end > BLOCKS_LIMIT * 10:
+                parallel = MAXIMUM_THREAD
             for i in range(parallel):
                 end = start - BLOCKS_LIMIT
                 end = 0 if end < 0 else end
