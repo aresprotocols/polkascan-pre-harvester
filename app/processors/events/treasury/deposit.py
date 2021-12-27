@@ -4,7 +4,7 @@ from app.settings import SEARCH_INDEX_TREASURY_DEPOSIT, SUBSTRATE_TREASURY_ACCOU
 
 class TreasuryProposed(EventProcessor):
     module_id = 'Treasury'
-    call_id = 'deposit'
+    event_id = 'deposit'
 
     def process_search_index(self, db_session):
         search_index = self.add_search_index(

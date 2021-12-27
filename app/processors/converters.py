@@ -20,19 +20,18 @@
 import json
 import logging
 import math
-from typing import Optional
 
 from scalecodec.base import ScaleBytes, RuntimeConfiguration
 from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
 from scalecodec.type_registry import load_type_registry_file
-from scalecodec.types import H256, GenericRegistryType
 from sqlalchemy import func, distinct
 from sqlalchemy.exc import SQLAlchemyError
-from substrateinterface import SubstrateInterface, logger
+from substrateinterface import logger
 from substrateinterface.exceptions import SubstrateRequestException
 from substrateinterface.utils.hasher import xxh128
 
 from app import settings, utils
+from app.extend.base import AresSubstrateInterface, CompatibleRuntimeConfiguration
 from app.models.data import Extrinsic, Block, Event, Runtime, RuntimeModule, RuntimeCall, RuntimeCallParam, \
     RuntimeEvent, RuntimeEventAttribute, RuntimeType, RuntimeStorage, BlockTotal, RuntimeConstant, AccountAudit, \
     AccountIndexAudit, ReorgBlock, ReorgExtrinsic, ReorgEvent, ReorgLog, RuntimeErrorMessage, Account, \
@@ -46,50 +45,6 @@ if settings.DEBUG:
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
     logger.addHandler(ch)
-
-
-class AresSubstrateInterface(SubstrateInterface):
-    def implements_scaleinfo(self) -> Optional[bool]:
-        if self.metadata_decoder:
-            return self.metadata_decoder.portable_registry is not None
-        return False
-
-    def init_runtime(self, block_hash=None, block_id=None):
-        super().init_runtime(block_hash=block_hash, block_id=block_id)
-        self.ss58_format = None
-
-
-# Copy GenericAccountId
-class AresGenericAccountId(H256):
-    """
-        unuseful
-
-        "AccountId": "AresGenericAccountId",
-        "ValidatorId": "AccountId",
-        "sp_core::crypto::AccountId32": "AresGenericAccountId",
-    """
-
-    def __init__(self, data=None, **kwargs):
-        self.public_key = None
-        super().__init__(data, **kwargs)
-
-    def process_encode(self, value):
-        if value[0:2] != '0x':
-            # from scalecodec.utils.ss58 import ss58_decode
-            # self.ss58_address = value
-            value = '0x{}'.format(value)
-        return super().process_encode(value)
-
-    def serialize(self):
-        return self.value
-
-    def process(self):
-        value = self.public_key = super().process()
-        return value
-
-    @classmethod
-    def process_scale_info_definition(cls, scale_info_definition: 'GenericRegistryType', prefix: str):
-        return
 
 
 class HarvesterCouldNotAddBlock(Exception):
@@ -118,7 +73,7 @@ class PolkascanHarvesterService(BaseService):
             url=settings.SUBSTRATE_RPC_URL,
             type_registry=custom_type_registry,
             type_registry_preset=type_registry,
-            runtime_config=RuntimeConfiguration()
+            runtime_config=CompatibleRuntimeConfiguration()
         )
         self.metadata_store = {}
 

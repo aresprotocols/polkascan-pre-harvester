@@ -4,7 +4,7 @@ from app.settings import SEARCH_INDEX_TREASURY_AWARDED
 
 class TreasuryAwarded(EventProcessor):
     module_id = 'Treasury'
-    call_id = 'awarded'
+    event_id = 'awarded'
 
     def process_search_index(self, db_session):
         # Add Beneficiary
