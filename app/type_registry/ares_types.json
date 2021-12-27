@@ -67,9 +67,7 @@
       "type": "struct",
       "type_mapping": [
         ["block_number", "BlockNumber"],
-        ["err_auth", "AuthorityId"],
-        ["err_status", "HttpError"],
-        ["tip", "Bytes"]
+        ["err_auth", "AuthorityId"]
       ]
     },
     "PurchasedRequestData": {
@@ -86,10 +84,10 @@
     "HttpError": {
       "type": "enum",
       "type_mapping": [
-        "IoErr",
-        "TimeOut",
-        "StatusErr(u16)",
-        "ParseErr"
+        ["IoErr",  "Null"],
+        ["TimeOut", "Null"],
+        ["StatusErr(u16)", "u16"],
+        ["ParseErr", "Null"]
       ]
     },
     "PurchasedPricePayload<Public, BlockNumber, AuthorityAres>": {
@@ -166,5 +164,21 @@
         ["is_income", "bool"]
       ]
     }
-  }
+  },
+  "versioning": [
+    {
+      "runtime_range": [103, null],
+      "types":{
+        "HttpErrTraceData<BlockNumber, AuthorityAres>": {
+          "type": "struct",
+          "type_mapping": [
+            ["block_number", "BlockNumber"],
+            ["err_auth", "AuthorityId"],
+            ["err_status", "HttpError"],
+            ["tip", "Bytes"]
+          ]
+        }
+      }
+    }
+  ]
 }
