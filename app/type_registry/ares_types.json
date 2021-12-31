@@ -128,11 +128,20 @@
     "PreCheckResultPayload": {
       "type": "struct",
       "type_mapping": [
-        ["pre_check_stash", "AccountId"],
-        ["pre_check_auth", "AuthorityId"],
         ["block_number", "BlockNumber"],
         ["pre_check_list", "Vec<PreCheckStruct>"],
+        ["pre_check_stash", "AccountId"],
+        ["pre_check_auth", "AuthorityId"],
         ["public", "MultiSigner"]
+      ]
+    },
+    "PreCheckStruct": {
+      "type": "struct",
+      "type_mapping": [
+        ["price_key", "Bytes"],
+        ["number_val", "JsonNumberValue"],
+        ["max_offset", "Percent"],
+        ["timestamp", "u64"]
       ]
     },
     "PurchasedDefaultData": {
