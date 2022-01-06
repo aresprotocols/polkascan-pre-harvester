@@ -686,6 +686,21 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('spec_version', 'type_string')
     )
+    op.create_table('data_symbol_price_snapshot',
+    sa.Column('block_id', sa.Integer(), nullable=False),
+    sa.Column('account_id', sa.String(length=64), nullable=False),
+    sa.Column('symbol', sa.String(length=30), nullable=False),
+    sa.Column('exponent', sa.Integer(), nullable=False),
+    sa.Column('fraction_part', sa.Integer(), nullable=False),
+    sa.Column('fraction_length', sa.Integer(), nullable=False),
+    sa.Column('integer_part', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.BigInteger(), nullable=False),
+    sa.PrimaryKeyConstraint('block_id', 'account_id', 'symbol')
+    )
+    op.create_index(op.f('ix_data_symbol_price_snapshot_account_id'), 'data_symbol_price_snapshot', ['account_id'], unique=False)
+    op.create_index(op.f('ix_data_symbol_price_snapshot_block_id'), 'data_symbol_price_snapshot', ['block_id'], unique=False)
+    op.create_index(op.f('ix_data_symbol_price_snapshot_symbol'), 'data_symbol_price_snapshot', ['symbol'], unique=False)
+    op.create_index(op.f('ix_data_symbol_price_snapshot_created_at'), 'data_symbol_price_snapshot', ['created_at'], unique=False)
     # ### end Alembic commands ###
 
 
@@ -838,4 +853,9 @@ def downgrade():
     op.drop_index(op.f('ix_data_account_balance_free'), table_name='data_account')
     op.drop_index(op.f('ix_data_account_address'), table_name='data_account')
     op.drop_table('data_account')
+    op.drop_index(op.f('ix_data_symbol_price_snapshot_account_id'), table_name='data_symbol_price_snapshot')
+    op.drop_index(op.f('ix_data_symbol_price_snapshot_block_id'), table_name='data_symbol_price_snapshot')
+    op.drop_index(op.f('ix_data_symbol_price_snapshot_symbol'), table_name='data_symbol_price_snapshot')
+    op.drop_index(op.f('ix_data_symbol_price_snapshot_created_at'), table_name='data_symbol_price_snapshot')
+    op.drop_table('data_symbol_price_snapshot')
     # ### end Alembic commands ###

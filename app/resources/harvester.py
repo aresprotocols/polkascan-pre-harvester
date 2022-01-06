@@ -35,15 +35,15 @@ from app.resources.base import BaseResource
 from app.schemas import load_schema
 from app.processors.converters import PolkascanHarvesterService, BlockAlreadyAdded, BlockIntegrityError
 from substrateinterface import SubstrateInterface
-from app.tasks import accumulate_block_recursive, start_harvester, rebuild_search_index, rebuild_account_info_snapshot
+from app.tasks import accumulate_block_recursive, start_harvester, rebuild_search_index, rebuild_account_info_snapshot, \
+    rebuild_oracle_price_snapshot
 from app.settings import SUBSTRATE_RPC_URL, TYPE_REGISTRY, TYPE_REGISTRY_FILE
 
 
 class PolkascanStartHarvesterResource(BaseResource):
 
-    #@validate(load_schema('start_harvester'))
+    # @validate(load_schema('start_harvester'))
     def on_post(self, req, resp):
-
         task = start_harvester.delay(check_gaps=True)
 
         resp.status = falcon.HTTP_201
@@ -59,7 +59,6 @@ class PolkascanStartHarvesterResource(BaseResource):
 class PolkascanStopHarvesterResource(BaseResource):
 
     def on_post(self, req, resp):
-
         resp.status = falcon.HTTP_404
 
         resp.media = {
@@ -73,7 +72,6 @@ class PolkascanStopHarvesterResource(BaseResource):
 class PolkaScanCheckHarvesterTaskResource(BaseResource):
 
     def on_get(self, req, resp, task_id):
-
         task_result = AsyncResult(task_id)
         result = {'status': task_result.status, 'result': task_result.result}
         resp.status = falcon.HTTP_200
@@ -370,5 +368,20 @@ class RebuildAccountInfoResource(BaseResource):
 
         resp.media = {
             'status': 'Search index rebuild task created',
+            'data': data
+        }
+
+
+class RebuildAresOraclePrice(BaseResource):
+    def on_post(self, req, resp):
+        if settings.CELERY_RUNNING:
+            task = rebuild_oracle_price_snapshot.delay()
+            data = {
+                'task_id': task.id
+            }
+        else:
+            data = rebuild_oracle_price_snapshot()
+        resp.media = {
+            'status': 'ares oracle price rebuild snapshot',
             'data': data
         }

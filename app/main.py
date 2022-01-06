@@ -18,22 +18,20 @@
 #
 #  main.py
 
-from app.settings import DB_CONNECTION, DEBUG
-
 import falcon
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.middleware.context import ContextMiddleware
 from app.middleware.sessionmanager import SQLAlchemySessionManager
-
 from app.resources.harvester import PolkascanStartHarvesterResource, PolkascanStopHarvesterResource, \
     PolkascanHarvesterStatusResource, PolkascanProcessBlockResource, \
     PolkaScanCheckHarvesterTaskResource, SequenceBlockResource, StartSequenceBlockResource, StartIntegrityResource, \
-    RebuildSearchIndexResource, ProcessGenesisBlockResource, PolkascanHarvesterQueueResource, RebuildAccountInfoResource
+    RebuildSearchIndexResource, ProcessGenesisBlockResource, PolkascanHarvesterQueueResource, \
+    RebuildAccountInfoResource, RebuildAresOraclePrice
 from app.resources.tools import ExtractMetadataResource, ExtractExtrinsicsResource, \
     HealthCheckResource, ExtractEventsResource, CreateSnapshotResource
+from app.settings import DB_CONNECTION, DEBUG
 
 # Database connection
 engine = create_engine(DB_CONNECTION, echo=DEBUG, isolation_level="READ_UNCOMMITTED", pool_pre_ping=True)
@@ -56,10 +54,10 @@ app.add_route('/integrity-check', StartIntegrityResource())
 app.add_route('/process-genesis', ProcessGenesisBlockResource())
 app.add_route('/rebuild-searchindex', RebuildSearchIndexResource())
 app.add_route('/rebuild-balances', RebuildAccountInfoResource())
+app.add_route('/rebuild-oracle', RebuildAresOraclePrice())
 app.add_route('/task/result/{task_id}', PolkaScanCheckHarvesterTaskResource())
 
 app.add_route('/tools/metadata/extract', ExtractMetadataResource())
 app.add_route('/tools/extrinsics/extract', ExtractExtrinsicsResource())
 app.add_route('/tools/events/extract', ExtractEventsResource())
 app.add_route('/tools/balance-snapshot', CreateSnapshotResource())
-

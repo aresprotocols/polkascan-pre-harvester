@@ -79,6 +79,8 @@ from .extrinsics.democracy.vote import *
 from .extrinsics.elections_phragmen.submit_candidacy import *
 from .extrinsics.elections_phragmen.vote import *
 
+from .extrinsics.oracle.submit_price import *
+
 from .extrinsics.staking.bond import *
 from .extrinsics.staking.bond_extra import *
 from .extrinsics.staking.chill import *
