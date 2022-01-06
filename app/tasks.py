@@ -396,7 +396,10 @@ def rebuild_oracle_price_snapshot(self, block_start=1, block_end=None, block_ids
         extrinsic = Extrinsic.query(self.session).filter_by(block_id=block_id, module_id='AresOracle',
                                                             call_id='submit_price_unsigned_with_signed_payload').first()
         if extrinsic:
-            block = Block.query(self.session).filter_by(id=block_id).first()
-            processor = AresOracleSubmitPrice(block, extrinsic, substrate=substrate)
-            processor.accumulation_hook(self.session)
-    self.session.commit()
+            try:
+                block = Block.query(self.session).filter_by(id=block_id).first()
+                processor = AresOracleSubmitPrice(block, extrinsic, substrate=substrate)
+                processor.accumulation_hook(self.session)
+                self.session.commit()
+            except Exception as e:
+                print('! error {}'.format(e))
