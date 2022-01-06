@@ -118,10 +118,10 @@
     "PreCheckPayload": {
       "type": "struct",
       "type_mapping": [
+        ["block_number", "BlockNumber"],
         ["pre_check_stash", "AccountId"],
         ["pre_check_auth", "AuthorityId"],
         ["auth", "AuthorityId"],
-        ["block_number", "BlockNumber"],
         ["public", "MultiSigner"]
       ]
     },
