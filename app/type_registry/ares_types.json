@@ -179,6 +179,14 @@
         ["amount", "BalanceOf"],
         ["is_income", "bool"]
       ]
+    },
+    "MultiplierOption": {
+      "type": "enum",
+      "value_list": ["Base1", "Base2", "Base5"]
+    },
+    "EstimatesType": {
+      "type": "enum",
+      "value_list": ["DEVIATION", "RANGE"]
     }
   }
 }
