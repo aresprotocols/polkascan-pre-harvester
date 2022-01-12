@@ -187,6 +187,29 @@
     "EstimatesType": {
       "type": "enum",
       "value_list": ["DEVIATION", "RANGE"]
+    },
+    "ChooseWinnersPayload<Public, AccountId, BlockNumber>": {
+      "type": "struct",
+      "type_mapping": [
+        ["block_number", "BlockNumber"],
+        ["winners", "Vec<AccountParticipateEstimates>"],
+        ["public", "MultiSigner"],
+        ["estimates_id", "u64"],
+        ["symbol", "text"],
+        ["price", "(u64, FractionLength)"]
+      ]
+    },
+    "AccountParticipateEstimates": {
+      "type": "struct",
+      "type_mapping": [
+        ["account", "AccountId"],
+        ["end", "BlockNumber"],
+        ["estimates", "Option<u64>"],
+        ["range_index", "Option<u8>"],
+        ["bsc_address", "Option<Vec<u8>>"],
+        ["multiplier", "MultiplierOption"],
+        ["reward", "u128"]
+      ]
     }
   }
 }
