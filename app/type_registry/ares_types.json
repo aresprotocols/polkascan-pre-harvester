@@ -1,5 +1,7 @@
 {
   "types": {
+    "AskPeriodNum": "u64",
+    "AskPointNum": "u32",
     "*::Event": {
       "type": "struct",
       "base_class": "GenericScaleInfoEvent",
@@ -37,8 +39,8 @@
         ["exponent", "u32"]
       ]
     },
-    "PricePayloadSubPrice": "(Bytes, u64, FractionLength, JsonNumberValue, u64)",
-    "PricePayloadSubJumpBlock": "(Bytes, RequestInterval)",
+    "PricePayloadSubPrice": "(PriceKey, u64, FractionLength, JsonNumberValue, u64)",
+    "PricePayloadSubJumpBlock": "(PriceKey, RequestInterval)",
     "PricePayload<Public, BlockNumber, AuthorityAres>": {
       "type": "struct",
       "type_mapping": [
@@ -53,7 +55,7 @@
       "type": "struct",
       "type_mapping": [
         ["price", "u64"],
-        ["account_id", "AuthorityId"],
+        ["account_id", "AccountId"],
         ["create_bn", "BlockNumber"],
         ["fraction_len", "FractionLength"],
         ["raw_number", "JsonNumberValue"],
@@ -115,6 +117,9 @@
         ["price_data", "(u64, FractionLength)"]
       ]
     },
+    "PurchasedId": "Vec<u8>",
+    "PriceKey": "Vec<u8>",
+    "PriceToken": "Vec<u8>",
     "PreCheckPayload": {
       "type": "struct",
       "type_mapping": [
@@ -149,8 +154,7 @@
       "type_mapping": [
         ["submit_threshold", "u8"],
         ["max_duration", "u64"],
-        ["avg_keep_duration", "u64"],
-        ["unit_price", "u64"]
+        ["avg_keep_duration", "u64"]
       ]
     },
     "PurchasedForceCleanPayload": {
@@ -169,9 +173,7 @@
         ["open_paid_price_reporter", "bool"]
       ]
     },
-    "AskPeriodNum": "u64",
     "PurchaseId": "Vec<u8>",
-    "AskPointNum": "u32",
     "PaidValue": {
       "type": "struct",
       "type_mapping": [
@@ -179,6 +181,10 @@
         ["amount", "BalanceOf"],
         ["is_income", "bool"]
       ]
+    },
+    "Releases": {
+      "type": "enum",
+      "value_list": ["V1_0_0_Ancestral", "V1_0_1_HttpErrUpgrade", "V1_1_0_HttpErrUpgrade", "V1_2_0"]
     },
     "MultiplierOption": {
       "type": "enum",
