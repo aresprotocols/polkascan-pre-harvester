@@ -118,7 +118,7 @@
       ]
     },
     "PurchasedId": "Vec<u8>",
-    "PriceKey": "Vec<u8>",
+    "PriceKey": "Text",
     "PriceToken": "Vec<u8>",
     "PreCheckPayload": {
       "type": "struct",
@@ -217,5 +217,29 @@
         ["reward", "u128"]
       ]
     }
-  }
+  },
+  "versioning": [
+    {
+      "runtime_range": [106, null],
+      "types":{
+        "HttpErrTracePayload<Public, BlockNumber, AuthorityAres, AccountId>": {
+          "type": "struct",
+          "type_mapping": [
+            ["trace_data", "HttpErrTraceData<BlockNumber, AccountId>"],
+            ["auth", "AuthorityId"],
+            ["public", "MultiSigner"]
+          ]
+        },
+        "HttpErrTraceData<BlockNumber, AccountId>": {
+          "type": "struct",
+          "type_mapping": [
+            ["block_number", "BlockNumber"],
+            ["err_auth", "AuthorityId"],
+            ["err_status", "HttpError"],
+            ["tip", "Bytes"]
+          ]
+        }
+      }
+    }
+  ]
 }
