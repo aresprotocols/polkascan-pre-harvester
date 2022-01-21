@@ -162,7 +162,8 @@
       "type_mapping": [
         ["BlockNumber", "BlockNumber"],
         ["purchase_id_list", "Vec<Vec<u8>>"],
-        ["public", "AccountId"]
+        ["auth","AccountId"],
+        ["public", "MultiSigner"]
       ]
     },
     "OcwControlData": {
