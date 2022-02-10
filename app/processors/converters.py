@@ -78,7 +78,7 @@ class PolkascanHarvesterService(BaseService):
         self.metadata_store = {}
 
     def process_genesis(self, block):
-
+        self.substrate.init_runtime(block_hash=block.hash)
         # Set block time of parent block
         child_block = Block.query(self.db_session).filter_by(parent_hash=block.hash).first()
         if child_block.datetime:
@@ -418,16 +418,21 @@ class PolkascanHarvesterService(BaseService):
                             # Decode value
                             try:
                                 constant_value = constant.value_object['value'].value_object
+                                decode_constant_type = constant.type if self.substrate.implements_scaleinfo() else constant.value.get("type")
                                 value_obj = self.substrate.runtime_config.create_scale_object(
-                                    constant.value.get("type"), data=ScaleBytes(constant_value)
+                                    decode_constant_type, data=ScaleBytes(constant_value)
                                 )
                                 value_obj.decode()
+                                constant_type = value_obj.type_name if self.substrate.implements_scaleinfo() and hasattr(value_obj, "type_name") else constant.type
                                 value = value_obj.serialize()
                             except ValueError:
+                                print("constant error:1, type:{}, name:{}", constant.type, constant.name)
                                 value = constant.value_object['value'].serialize()
                             except RemainingScaleBytesNotEmptyException:
+                                print("constant error:2, type:{}, name:{}", constant.type, constant.name)
                                 value = constant.value_object['value'].serialize()
                             except NotImplementedError:
+                                print("constant error:3, type:{}, name:{}", constant.type, constant.name)
                                 value = constant.value_object['value'].serialize()
 
                             if type(value) is list or type(value) is dict:
@@ -438,7 +443,7 @@ class PolkascanHarvesterService(BaseService):
                                 module_id=module_id,
                                 index=idx,
                                 name=constant.name,
-                                type=constant.type,
+                                type=constant_type,
                                 value=value
                             )
                             runtime_constant.save(self.db_session)
@@ -782,6 +787,9 @@ class PolkascanHarvesterService(BaseService):
         self.db_session.delete(block)
 
     def sequence_block(self, block: Block, parent_block_data=None, parent_sequenced_block_data=None):
+        spec_version = block.spec_version_id
+        if spec_version not in self.substrate.metadata_cache:
+            self.substrate.init_runtime(block_hash=block.hash)
 
         sequenced_block = BlockTotal(
             id=block.id

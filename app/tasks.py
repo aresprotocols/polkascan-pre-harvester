@@ -19,6 +19,7 @@
 #  tasks.py
 
 import os
+import traceback
 
 import celery
 from celery.result import AsyncResult
@@ -171,6 +172,7 @@ def start_sequencer(self):
         try:
             result = harvester.start_sequencer()
         except Exception as e:
+            # traceback.print_exception(type(e), e, e.__traceback__)
             self.session.rollback()
             result = {'result': str(e)}
 

@@ -15,6 +15,16 @@ class AresSubstrateInterface(SubstrateInterface):
         super().init_runtime(block_hash=block_hash, block_id=block_id)
         self.ss58_format = None
 
+    def reload_type_registry(self, use_remote_preset: bool = True, auto_discover: bool = True):
+        super().reload_type_registry(use_remote_preset=use_remote_preset, auto_discover=auto_discover)
+        self.runtime_config.update_type_registry_types({
+            "*::Event": {
+                "type": "struct",
+                "base_class": "CompatibleGenericScaleInfoEvent",
+                "type_mapping": []
+            }
+        })
+
 
 class CompatibleRuntimeConfigurationObject(RuntimeConfigurationObject):
     def get_decoder_class_for_scale_info_definition(
@@ -44,7 +54,30 @@ class CompatibleRuntimeConfigurationObject(RuntimeConfigurationObject):
 
                 return decoder_class
 
-        if 'variant' in scale_info_type.value['def']:
+        if 'composite' in scale_info_type.value['def']:
+
+            type_mapping = []
+            base_type_string = 'Tuple'
+            type_name = None
+            if 'fields' in scale_info_type.value['def']['composite']:
+
+                fields = scale_info_type.value['def']['composite']['fields']
+
+                if all([f.get('name') for f in fields]):
+                    base_type_string = 'Struct'
+                    type_mapping = [[field['name'], f"{prefix}::{field['type']}"] for field in fields]
+                else:
+                    base_type_string = 'Tuple'
+                    type_mapping = [f"{prefix}::{field['type']}" for field in fields]
+
+                type_name = '::'.join(scale_info_type.value["path"][-1:])
+            if base_decoder_class is None:
+                base_decoder_class = self.get_decoder_class(base_type_string)
+            decoder_class = type(type_string, (base_decoder_class,), {
+                'type_mapping': type_mapping,
+                'type_name': type_name
+            })
+        elif 'variant' in scale_info_type.value['def']:
             # Enum
             type_mapping = []
             type_name = []
@@ -74,26 +107,18 @@ class CompatibleRuntimeConfigurationObject(RuntimeConfigurationObject):
 
                     else:
                         enum_value = 'Null'
-                    print("path: {}, type_string:{},  variant: {}, value: {}, field_type: {}".format(path_string,
-                                                                                                     type_string,
-                                                                                                     variant['index'],
-                                                                                                     (variant['name'],
-                                                                                                      enum_value),
-                                                                                                     field_types,
-                                                                                                     ))
                     # Put mapping in right order in list
                     type_mapping[variant['index']] = (variant['name'], enum_value)
                     type_name[variant['index']] = field_types
             if base_decoder_class is None:
                 base_decoder_class = self.get_decoder_class("Enum")
-
             decoder_class = type(type_string, (base_decoder_class,), {
                 'type_mapping': type_mapping,
                 'type_name': type_name,
             })
-            decoder_class.scale_info_type = scale_info_type
         else:
             return super().get_decoder_class_for_scale_info_definition(type_string, scale_info_type, prefix)
+        decoder_class.scale_info_type = scale_info_type
         return decoder_class
 
 
@@ -108,7 +133,6 @@ class CompatibleGenericScaleInfoEvent(Enum):
         self.event_index = None
         self.event = None
         self.event_module = None
-
         super().__init__(*args, **kwargs)
 
     def process(self):
@@ -116,17 +140,24 @@ class CompatibleGenericScaleInfoEvent(Enum):
         super().process()
         enum_index = self.value_object[1].index
         self.event_index = bytes([self.index, enum_index]).hex()
-
-        if type(self.value_object[1][1].value) == tuple and hasattr(self.value_object[1], 'type_name'):
-            attributes = [{}] * len(self.value_object[1][1].value)
-            i = 0
-            types = self.value_object[1].type_name[enum_index]
-            for value in self.value_object[1][1].value:
-                attributes[i] = {
-                    'type': types[i],
-                    'value': value,
+        if self.value_object[1][1] and hasattr(self.value_object[1], 'type_name'):
+            if type(self.value_object[1][1].value) == tuple:
+                attributes = [{}] * len(self.value_object[1][1].value)
+                i = 0
+                types = self.value_object[1].type_name[enum_index]
+                for value in self.value_object[1][1].value:
+                    attributes[i] = {
+                        'type': types[i],
+                        'value': value,
+                    }
+                    i += 1
+            else:
+                attributes = [{}] * 1
+                types = self.value_object[1].type_name[enum_index]
+                attributes[0] = {
+                    'type': types[0],
+                    'value': self.value_object[1][1].value,
                 }
-                i += 1
         else:
             attributes = self.value_object[1][1].value if self.value_object[1][1] else None
 
