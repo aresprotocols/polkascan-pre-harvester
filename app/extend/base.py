@@ -112,6 +112,7 @@ class CompatibleRuntimeConfigurationObject(RuntimeConfigurationObject):
                     type_name[variant['index']] = field_types
             if base_decoder_class is None:
                 base_decoder_class = self.get_decoder_class("Enum")
+            # print(type_string, path_string, type_name)
             decoder_class = type(type_string, (base_decoder_class,), {
                 'type_mapping': type_mapping,
                 'type_name': type_name,
@@ -155,7 +156,7 @@ class CompatibleGenericScaleInfoEvent(Enum):
                 attributes = [{}] * 1
                 types = self.value_object[1].type_name[enum_index]
                 attributes[0] = {
-                    'type': types[0],
+                    'type': types,
                     'value': self.value_object[1][1].value,
                 }
         else:
