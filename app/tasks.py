@@ -424,6 +424,7 @@ def rebuild_total_treasury_burn(self, block_start=1, block_end=None, block_ids=N
     for block_id in block_range:
         if block_id > 1:
             sequencer_parent_block = BlockTotal.query(self.session).filter_by(id=block_id - 1).first()
+            sequencer_parent_block = sequencer_parent_block.asdict()
         else:
             sequencer_parent_block = {}
 
@@ -431,14 +432,18 @@ def rebuild_total_treasury_burn(self, block_start=1, block_end=None, block_ids=N
         if events:
             try:
                 block = Block.query(self.session).filter_by(id=block_id).first()
-                sequenced_block = BlockTotal.query(self.session).filter_by(id=block_id).first()
+                sequenced_block: BlockTotal = BlockTotal.query(self.session).filter_by(id=block_id).first()
+                exist = False
                 for event in events:
                     if event.module_id == 'treasury' and event.event_id == 'Burnt':
                         processor = TreasuryBurnt(block, event, substrate=substrate, sequenced_block=sequenced_block)
-                        processor.sequencing_hook(self.session, {}, sequencer_parent_block.asdict())
+                        processor.sequencing_hook(self.session, {}, sequencer_parent_block)
                         sequenced_block.save(self.session)
+                        self.session.commit()
+                        exist = True
                         break
-                self.session.commit()
+                if exist is False:
+                    sequenced_block.total_treasury_burn = int(sequencer_parent_block.get('total_treasury_burn', 0))
+                    self.session.commit()
             except Exception as e:
                 print('! error {}'.format(e))
-
