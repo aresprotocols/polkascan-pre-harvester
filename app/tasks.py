@@ -28,10 +28,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from app import settings
-from app.models.data import Block, Account, AccountInfoSnapshot, SearchIndex, SymbolPriceSnapshot, Extrinsic
+from app.models.data import Block, Account, AccountInfoSnapshot, SearchIndex, SymbolPriceSnapshot, Extrinsic, \
+    BlockTotal, Event
 from app.models.harvester import Status
 from app.processors.converters import PolkascanHarvesterService, HarvesterCouldNotAddBlock, BlockAlreadyAdded
 from app.processors.extrinsics.oracle.submit_price import AresOracleSubmitPrice
+from app.processors.events.treasury.burnt import TreasuryBurnt
 from app.settings import DB_CONNECTION, DEBUG, TYPE_REGISTRY, FINALIZATION_ONLY, TYPE_REGISTRY_FILE, \
     MAXIMUM_THREAD
 
@@ -405,3 +407,39 @@ def rebuild_oracle_price_snapshot(self, block_start=1, block_end=None, block_ids
                 self.session.commit()
             except Exception as e:
                 print('! error {}'.format(e))
+
+
+@app.task(base=BaseTask, bind=True)
+def rebuild_total_treasury_burn(self, block_start=1, block_end=None, block_ids=None):
+    substrate = self.harvester.substrate
+    if block_ids:
+        block_range = block_ids
+    else:
+        if block_end is None:
+            # Set block end to chaintip
+            substrate = self.harvester.substrate
+            block_end = substrate.get_block_number(substrate.get_chain_finalised_head())
+
+        block_range = range(block_start, block_end + 1)
+
+    for block_id in block_range:
+        if block_id > 1:
+            sequencer_parent_block = BlockTotal.query(self.db_session).filter_by(id=block_id - 1).first()
+        else:
+            sequencer_parent_block = {}
+
+        events = Event.query(self.db_session).filter_by(block_id=block_id).order_by('event_idx')
+        if events:
+            try:
+                block = Block.query(self.session).filter_by(id=block_id).first()
+                sequenced_block = BlockTotal.query(self.db_session).filter_by(id=block_id).first()
+                for event in events:
+                    if event.module_id == 'treasury' and event.event_id == 'Burnt':
+                        processor = TreasuryBurnt(block, event, substrate=substrate, sequenced_block=sequenced_block)
+                        processor.sequencing_hook(self.session, {}, sequencer_parent_block)
+                        sequenced_block.save(self.session)
+                        break
+                self.session.commit()
+            except Exception as e:
+                print('! error {}'.format(e))
+

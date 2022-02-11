@@ -36,7 +36,7 @@ from app.schemas import load_schema
 from app.processors.converters import PolkascanHarvesterService, BlockAlreadyAdded, BlockIntegrityError
 from substrateinterface import SubstrateInterface
 from app.tasks import accumulate_block_recursive, start_harvester, rebuild_search_index, rebuild_account_info_snapshot, \
-    rebuild_oracle_price_snapshot
+    rebuild_oracle_price_snapshot, rebuild_total_treasury_burn
 from app.settings import SUBSTRATE_RPC_URL, TYPE_REGISTRY, TYPE_REGISTRY_FILE
 
 
@@ -381,6 +381,21 @@ class RebuildAresOraclePrice(BaseResource):
             }
         else:
             data = rebuild_oracle_price_snapshot()
+        resp.media = {
+            'status': 'ares oracle price rebuild snapshot',
+            'data': data
+        }
+
+
+class RebuildTotalTreasuryBurn(BaseResource):
+    def on_post(self, req, resp):
+        if settings.CELERY_RUNNING:
+            task = rebuild_total_treasury_burn.delay()
+            data = {
+                'task_id': task.id
+            }
+        else:
+            data = rebuild_total_treasury_burn()
         resp.media = {
             'status': 'ares oracle price rebuild snapshot',
             'data': data

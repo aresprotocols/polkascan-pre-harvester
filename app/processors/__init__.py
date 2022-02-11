@@ -71,6 +71,7 @@ from .events.tech_comm.voted import *
 
 from .events.treasury.awarded import *
 from .events.treasury.deposit import *
+from .events.treasury.burnt import *
 
 from .extrinsics.democracy.proxy_vote import *
 from .extrinsics.democracy.second import *

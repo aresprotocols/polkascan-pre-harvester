@@ -17,7 +17,7 @@
 #  along with Polkascan. If not, see <http://www.gnu.org/licenses/>.
 #
 #  base.py
-from app.models.data import SearchIndex, BlockTotal, Block
+from app.models.data import SearchIndex, BlockTotal, Block, Event, Extrinsic
 from substrateinterface import SubstrateInterface
 from scalecodec.types import ss58_decode
 
@@ -132,12 +132,14 @@ class EventProcessor(Processor):
     module_id = None
     event_id = None
 
-    def __init__(self, block, event, extrinsic=None, metadata=None, substrate: SubstrateInterface = None):
+    def __init__(self, block: Block = None, event: Event = None, extrinsic: Extrinsic = None, metadata=None,
+                 substrate: SubstrateInterface = None, sequenced_block: BlockTotal = None):
         self.block = block
         self.event = event
         self.extrinsic = extrinsic
         self.metadata = metadata
         self.substrate = substrate
+        self.sequenced_block = sequenced_block
 
     def add_search_index(self, index_type_id, account_id=None, sorting_value=None):
         # ss58_format = self.substrate.ss58_format

@@ -28,7 +28,7 @@ from app.resources.harvester import PolkascanStartHarvesterResource, PolkascanSt
     PolkascanHarvesterStatusResource, PolkascanProcessBlockResource, \
     PolkaScanCheckHarvesterTaskResource, SequenceBlockResource, StartSequenceBlockResource, StartIntegrityResource, \
     RebuildSearchIndexResource, ProcessGenesisBlockResource, PolkascanHarvesterQueueResource, \
-    RebuildAccountInfoResource, RebuildAresOraclePrice
+    RebuildAccountInfoResource, RebuildAresOraclePrice, RebuildTotalTreasuryBurn
 from app.resources.tools import ExtractMetadataResource, ExtractExtrinsicsResource, \
     HealthCheckResource, ExtractEventsResource, CreateSnapshotResource
 from app.settings import DB_CONNECTION, DEBUG
@@ -55,6 +55,7 @@ app.add_route('/process-genesis', ProcessGenesisBlockResource())
 app.add_route('/rebuild-searchindex', RebuildSearchIndexResource())
 app.add_route('/rebuild-balances', RebuildAccountInfoResource())
 app.add_route('/rebuild-oracle', RebuildAresOraclePrice())
+app.add_route('/rebuild-burn', RebuildTotalTreasuryBurn())
 app.add_route('/task/result/{task_id}', PolkaScanCheckHarvesterTaskResource())
 
 app.add_route('/tools/metadata/extract', ExtractMetadataResource())
