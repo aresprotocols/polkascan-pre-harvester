@@ -421,7 +421,6 @@ def rebuild_total_treasury_burn(self, block_start=1, block_end=None, block_ids=N
             block_end = substrate.get_block_number(substrate.get_chain_finalised_head())
 
         block_range = range(block_start, block_end + 1)
-
     for block_id in block_range:
         if block_id > 1:
             sequencer_parent_block = BlockTotal.query(self.db_session).filter_by(id=block_id - 1).first()
@@ -436,7 +435,7 @@ def rebuild_total_treasury_burn(self, block_start=1, block_end=None, block_ids=N
                 for event in events:
                     if event.module_id == 'treasury' and event.event_id == 'Burnt':
                         processor = TreasuryBurnt(block, event, substrate=substrate, sequenced_block=sequenced_block)
-                        processor.sequencing_hook(self.session, {}, sequencer_parent_block)
+                        processor.sequencing_hook(self.session, {}, sequencer_parent_block.asdict())
                         sequenced_block.save(self.session)
                         break
                 self.session.commit()

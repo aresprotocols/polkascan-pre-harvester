@@ -397,6 +397,6 @@ class RebuildTotalTreasuryBurn(BaseResource):
         else:
             data = rebuild_total_treasury_burn()
         resp.media = {
-            'status': 'ares oracle price rebuild snapshot',
+            'status': 'rebuild treasury_burn',
             'data': data
         }
