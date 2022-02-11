@@ -423,15 +423,15 @@ def rebuild_total_treasury_burn(self, block_start=1, block_end=None, block_ids=N
         block_range = range(block_start, block_end + 1)
     for block_id in block_range:
         if block_id > 1:
-            sequencer_parent_block = BlockTotal.query(self.db_session).filter_by(id=block_id - 1).first()
+            sequencer_parent_block = BlockTotal.query(self.session).filter_by(id=block_id - 1).first()
         else:
             sequencer_parent_block = {}
 
-        events = Event.query(self.db_session).filter_by(block_id=block_id).order_by('event_idx')
+        events = Event.query(self.session).filter_by(block_id=block_id).order_by('event_idx')
         if events:
             try:
                 block = Block.query(self.session).filter_by(id=block_id).first()
-                sequenced_block = BlockTotal.query(self.db_session).filter_by(id=block_id).first()
+                sequenced_block = BlockTotal.query(self.session).filter_by(id=block_id).first()
                 for event in events:
                     if event.module_id == 'treasury' and event.event_id == 'Burnt':
                         processor = TreasuryBurnt(block, event, substrate=substrate, sequenced_block=sequenced_block)
