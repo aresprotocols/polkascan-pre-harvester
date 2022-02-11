@@ -792,7 +792,8 @@ class PolkascanHarvesterService(BaseService):
             self.substrate.init_runtime(block_hash=block.hash)
 
         sequenced_block = BlockTotal(
-            id=block.id
+            id=block.id,
+            total_treasury_burn=0  # update by event processor
         )
 
         # Process block processors
