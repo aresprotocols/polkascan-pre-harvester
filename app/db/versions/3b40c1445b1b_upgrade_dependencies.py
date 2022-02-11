@@ -38,7 +38,8 @@ def upgrade():
     op.add_column('data_reorg_block', sa.Column('count_events_transfer', sa.Integer(), nullable=False))
     op.add_column('data_block_total',
                   sa.Column('total_events_transfer', sa.Numeric(precision=65, scale=0), nullable=False))
-
+    op.add_column('data_block_total',
+                  sa.Column('total_treasury_burn', sa.Numeric(precision=65, scale=0), nullable=False))
 
 def downgrade():
     op.alter_column('data_extrinsic', 'era',
@@ -65,3 +66,4 @@ def downgrade():
     op.drop_column('data_block', 'count_events_transfer')
     op.drop_column('data_reorg_block', 'count_events_transfer')
     op.drop_column('data_block_total', 'total_events_transfer')
+    op.drop_column('data_block_total', 'total_treasury_burn')
