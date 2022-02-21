@@ -1,4 +1,4 @@
-from app.models.data import SymbolPriceSnapshot
+from app.models.data import SymbolSnapshot
 from app.processors import ExtrinsicProcessor
 
 
@@ -12,21 +12,21 @@ class AresOracleSubmitPrice(ExtrinsicProcessor):
         account_id = extrinsic['auth']
         block_number = self.block.id
         # print("block_number:{},account_id:{}".format(block_number, account_id))
-        for price in extrinsic['price']:
-            symbol = price[0]
-            timestamp = price[4]
-            exponent = price[3]['exponent']
-            integer_part = price[3]['integer']
-            fraction_part = price[3]['fraction']
-            fraction_length = price[3]['fraction_length']
-            snapshot = SymbolPriceSnapshot(
-                block_id=block_number,
-                account_id=account_id.replace('0x', ''),
-                symbol=symbol,
-                exponent=exponent,
-                fraction_part=fraction_part,
-                fraction_length=fraction_length,
-                integer_part=integer_part,
-                created_at=timestamp
-            )
-            snapshot.save(db_session)
+        # for price in extrinsic['price']:
+        #     symbol = price[0]
+        #     timestamp = price[4]
+        #     exponent = price[3]['exponent']
+        #     integer_part = price[3]['integer']
+        #     fraction_part = price[3]['fraction']
+        #     fraction_length = price[3]['fraction_length']
+        #     snapshot = SymbolPriceSnapshot(
+        #         block_id=block_number,
+        #         account_id=account_id.replace('0x', ''),
+        #         symbol=symbol,
+        #         exponent=exponent,
+        #         fraction_part=fraction_part,
+        #         fraction_length=fraction_length,
+        #         integer_part=integer_part,
+        #         created_at=timestamp
+        #     )
+        #     snapshot.save(db_session)

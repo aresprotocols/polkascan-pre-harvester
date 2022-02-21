@@ -147,6 +147,7 @@ class BlockTotal(BaseModel):
     total_contracts_new = sa.Column(sa.Numeric(precision=65, scale=0), nullable=False)
     total_treasury_burn = sa.Column(sa.Numeric(precision=65, scale=0), nullable=False)
 
+
 class Event(BaseModel):
     __tablename__ = 'data_event'
 
@@ -379,7 +380,6 @@ class AccountIndexAudit(BaseModel):
     data = sa.Column(sa.JSON(), default=None, server_default=None, nullable=True)
 
 
-
 class Contract(BaseModel):
     __tablename__ = 'data_contract'
 
@@ -545,6 +545,7 @@ class RuntimeStorage(BaseModel):
         if self.type_key2hasher is not None:
             r.append(self.type_key2hasher)
         return r
+
 
 class RuntimeConstant(BaseModel):
     __tablename__ = 'runtime_constant'
@@ -780,16 +781,24 @@ class SearchIndex(BaseModel):
     sorting_value = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True, index=True)
 
 
-class SymbolPriceSnapshot(BaseModel):
-    __tablename__ = 'data_symbol_price_snapshot'
+class SymbolSnapshot(BaseModel):
+    __tablename__ = 'data_symbol_snapshot'
 
     block_id = sa.Column(sa.Integer(), primary_key=True, index=True)
-    account_id = sa.Column(sa.String(64), primary_key=True, index=True)
     symbol = sa.Column(sa.String(30), primary_key=True, index=True)
 
-    exponent = sa.Column(sa.Integer, nullable=False)
-    fraction_part = sa.Column(sa.Integer, nullable=False)
-    fraction_length = sa.Column(sa.Integer, nullable=False)
-    integer_part = sa.Column(sa.Integer, nullable=False)
+    price = sa.Column(sa.Integer, nullable=False)
+    fraction = sa.Column(sa.Integer, nullable=False)
+    auth = sa.Column(sa.JSON(), nullable=True)
+    created_at = sa.Column(sa.DateTime(timezone=True), nullable=True)
 
-    created_at = sa.Column(sa.BigInteger, nullable=False)
+
+class EraPriceRequest(BaseModel):
+    __tablename__ = 'data_era_price_request'
+
+    era = sa.Column(sa.Integer(), primary_key=True)
+    total_eras = sa.Column(sa.Integer(), nullable=False)
+    era_total_requests = sa.Column(sa.Integer(), nullable=False)
+    era_total_points = sa.Column(sa.Integer(), nullable=False)
+    era_total_fee = sa.Column(sa.Numeric(precision=65, scale=0), nullable=False)
+    ended_at = sa.Column(sa.Integer(), nullable=True)

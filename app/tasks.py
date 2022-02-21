@@ -28,11 +28,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from app import settings
-from app.models.data import Block, Account, AccountInfoSnapshot, SearchIndex, SymbolPriceSnapshot, Extrinsic, \
+from app.models.data import Block, Account, AccountInfoSnapshot, SearchIndex, SymbolSnapshot, Extrinsic, \
     BlockTotal, Event
 from app.models.harvester import Status
 from app.processors.converters import PolkascanHarvesterService, HarvesterCouldNotAddBlock, BlockAlreadyAdded
-from app.processors.extrinsics.oracle.submit_price import AresOracleSubmitPrice
 from app.processors.events.treasury.burnt import TreasuryBurnt
 from app.settings import DB_CONNECTION, DEBUG, TYPE_REGISTRY, FINALIZATION_ONLY, TYPE_REGISTRY_FILE, \
     MAXIMUM_THREAD
@@ -383,30 +382,31 @@ def update_balances_in_block(self, block_id):
 
 @app.task(base=BaseTask, bind=True)
 def rebuild_oracle_price_snapshot(self, block_start=1, block_end=None, block_ids=None):
-    self.session.execute('truncate table {}'.format(SymbolPriceSnapshot.__tablename__))
-
-    substrate = self.harvester.substrate
-    if block_ids:
-        block_range = block_ids
-    else:
-        if block_end is None:
-            # Set block end to chaintip
-            substrate = self.harvester.substrate
-            block_end = substrate.get_block_number(substrate.get_chain_finalised_head())
-
-        block_range = range(block_start, block_end + 1)
-
-    for block_id in block_range:
-        extrinsic = Extrinsic.query(self.session).filter_by(block_id=block_id, module_id='AresOracle',
-                                                            call_id='submit_price_unsigned_with_signed_payload').first()
-        if extrinsic:
-            try:
-                block = Block.query(self.session).filter_by(id=block_id).first()
-                processor = AresOracleSubmitPrice(block, extrinsic, substrate=substrate)
-                processor.accumulation_hook(self.session)
-                self.session.commit()
-            except Exception as e:
-                print('! error {}'.format(e))
+    print("1")
+    # self.session.execute('truncate table {}'.format(SymbolSnapshot.__tablename__))
+    #
+    # substrate = self.harvester.substrate
+    # if block_ids:
+    #     block_range = block_ids
+    # else:
+    #     if block_end is None:
+    #         # Set block end to chaintip
+    #         substrate = self.harvester.substrate
+    #         block_end = substrate.get_block_number(substrate.get_chain_finalised_head())
+    #
+    #     block_range = range(block_start, block_end + 1)
+    #
+    # for block_id in block_range:
+    #     extrinsic = Extrinsic.query(self.session).filter_by(block_id=block_id, module_id='AresOracle',
+    #                                                         call_id='submit_price_unsigned_with_signed_payload').first()
+    #     if extrinsic:
+    #         try:
+    #             block = Block.query(self.session).filter_by(id=block_id).first()
+    #             processor = AresOracleSubmitPrice(block, extrinsic, substrate=substrate)
+    #             processor.accumulation_hook(self.session)
+    #             self.session.commit()
+    #         except Exception as e:
+    #             print('! error {}'.format(e))
 
 
 @app.task(base=BaseTask, bind=True)

@@ -686,21 +686,29 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('spec_version', 'type_string')
     )
-    op.create_table('data_symbol_price_snapshot',
+    op.create_table('data_symbol_snapshot',
     sa.Column('block_id', sa.Integer(), nullable=False),
-    sa.Column('account_id', sa.String(length=64), nullable=False),
     sa.Column('symbol', sa.String(length=30), nullable=False),
-    sa.Column('exponent', sa.Integer(), nullable=False),
-    sa.Column('fraction_part', sa.Integer(), nullable=False),
-    sa.Column('fraction_length', sa.Integer(), nullable=False),
-    sa.Column('integer_part', sa.Integer(), nullable=False),
-    sa.Column('created_at', sa.BigInteger(), nullable=False),
-    sa.PrimaryKeyConstraint('block_id', 'account_id', 'symbol')
+    sa.Column('price', sa.Integer(), nullable=False),
+    sa.Column('fraction', sa.Integer(), nullable=False),
+    sa.Column('auth', sa.JSON(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
+    sa.PrimaryKeyConstraint('block_id', 'symbol')
     )
-    op.create_index(op.f('ix_data_symbol_price_snapshot_account_id'), 'data_symbol_price_snapshot', ['account_id'], unique=False)
-    op.create_index(op.f('ix_data_symbol_price_snapshot_block_id'), 'data_symbol_price_snapshot', ['block_id'], unique=False)
-    op.create_index(op.f('ix_data_symbol_price_snapshot_symbol'), 'data_symbol_price_snapshot', ['symbol'], unique=False)
-    op.create_index(op.f('ix_data_symbol_price_snapshot_created_at'), 'data_symbol_price_snapshot', ['created_at'], unique=False)
+    op.create_index(op.f('ix_data_symbol_snapshot_block_id'), 'data_symbol_snapshot', ['block_id'], unique=False)
+    op.create_index(op.f('ix_data_symbol_snapshot_symbol'), 'data_symbol_snapshot', ['symbol'], unique=False)
+
+    op.create_table('data_era_price_request',
+    sa.Column('era', sa.Integer(), nullable=False),
+    sa.Column('total_eras', sa.Integer(), nullable=False),
+    sa.Column('era_total_requests', sa.Integer(), nullable=False),
+    sa.Column('era_total_points', sa.Integer(), nullable=False),
+    sa.Column('era_total_fee', sa.Numeric(precision=65, scale=0), nullable=False),
+    sa.Column('ended_at', sa.Integer(), nullable=True),
+    sa.PrimaryKeyConstraint('era')
+    )
+    op.create_index(op.f('ix_data_era_price_request_ended_at'), 'data_era_price_request', ['ended_at'], unique=False)
+
     # ### end Alembic commands ###
 
 
@@ -853,9 +861,10 @@ def downgrade():
     op.drop_index(op.f('ix_data_account_balance_free'), table_name='data_account')
     op.drop_index(op.f('ix_data_account_address'), table_name='data_account')
     op.drop_table('data_account')
-    op.drop_index(op.f('ix_data_symbol_price_snapshot_account_id'), table_name='data_symbol_price_snapshot')
-    op.drop_index(op.f('ix_data_symbol_price_snapshot_block_id'), table_name='data_symbol_price_snapshot')
-    op.drop_index(op.f('ix_data_symbol_price_snapshot_symbol'), table_name='data_symbol_price_snapshot')
-    op.drop_index(op.f('ix_data_symbol_price_snapshot_created_at'), table_name='data_symbol_price_snapshot')
-    op.drop_table('data_symbol_price_snapshot')
+    op.drop_index(op.f('ix_data_symbol_snapshot_block_id'), table_name='data_symbol_snapshot')
+    op.drop_index(op.f('ix_data_symbol_snapshot_symbol'), table_name='data_symbol_snapshot')
+    op.drop_table('data_symbol_snapshot')
+
+    op.drop_index(op.f('ix_data_era_price_request_ended_at'), table_name='data_era_price_request')
+    op.drop_table('data_era_price_request')
     # ### end Alembic commands ###

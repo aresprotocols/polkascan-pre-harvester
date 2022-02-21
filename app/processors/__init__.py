@@ -56,6 +56,10 @@ from .events.indices.index_assigned import *
 from .events.indices.index_freed import *
 from .events.indices.new_account import *
 
+from .events.oracle.aggregated_price import *
+from .events.oracle.end_of_ask_era import *
+from .events.oracle.new_purchase_request import *
+
 from .events.session.new_session import *
 
 from .events.staking.slash import *
@@ -80,7 +84,7 @@ from .extrinsics.democracy.vote import *
 from .extrinsics.elections_phragmen.submit_candidacy import *
 from .extrinsics.elections_phragmen.vote import *
 
-from .extrinsics.oracle.submit_price import *
+# from .extrinsics.oracle.submit_price import *
 
 from .extrinsics.staking.bond import *
 from .extrinsics.staking.bond_extra import *
