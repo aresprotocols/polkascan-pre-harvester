@@ -49,7 +49,10 @@ class LogBlockProcessor(BlockProcessor):
                 elif engine_id == 'BABE' and 'Seal' == log_type:
                     log_inner_data = {"data": log_digest.value['Seal'][1], "engine": "BABE"}
             else:
-                log_inner_data = log_digest.value[log_type]
+                if type(log_digest.value) == str:
+                    log_inner_data = log_digest.value
+                else:
+                    log_inner_data = log_digest.value[log_type]
 
             log = Log(
                 block_id=self.block.id,
