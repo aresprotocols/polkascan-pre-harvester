@@ -698,6 +698,22 @@ def upgrade():
     op.create_index(op.f('ix_data_symbol_snapshot_block_id'), 'data_symbol_snapshot', ['block_id'], unique=False)
     op.create_index(op.f('ix_data_symbol_snapshot_symbol'), 'data_symbol_snapshot', ['symbol'], unique=False)
 
+    op.create_table('data_price_request',
+    sa.Column('order_id', sa.String(length=100), nullable=False),
+    sa.Column('created_by', sa.String(length=64), nullable=False),
+    sa.Column('symbols', sa.JSON(), nullable=True),
+    sa.Column('status', sa.Integer(), nullable=False),
+    sa.Column('prepayment', sa.Numeric(precision=65, scale=0), nullable=False),
+    sa.Column('payment', sa.Numeric(precision=65, scale=0), nullable=False),
+    sa.Column('result', sa.JSON(), nullable=True),
+    sa.Column('auth', sa.JSON(), nullable=True),
+    sa.Column('created_at', sa.Integer(), nullable=False),
+    sa.Column('ended_at', sa.Integer(), nullable=True),
+    sa.PrimaryKeyConstraint('order_id')
+    )
+    op.create_index(op.f('ix_data_price_request_created_by'), 'data_price_request', ['created_by'], unique=False)
+    op.create_index(op.f('ix_data_price_request_created_at'), 'data_price_request', ['created_at'], unique=False)
+
     op.create_table('data_era_price_request',
     sa.Column('era', sa.Integer(), nullable=False),
     sa.Column('total_eras', sa.Integer(), nullable=False),
@@ -867,4 +883,8 @@ def downgrade():
 
     op.drop_index(op.f('ix_data_era_price_request_ended_at'), table_name='data_era_price_request')
     op.drop_table('data_era_price_request')
+
+    op.drop_index(op.f('ix_data_price_request_created_by'), table_name='data_price_request')
+    op.drop_index(op.f('ix_data_price_request_created_at'), table_name='data_price_request')
+    op.drop_table('data_price_request')
     # ### end Alembic commands ###

@@ -59,6 +59,8 @@ from .events.indices.new_account import *
 from .events.oracle.aggregated_price import *
 from .events.oracle.end_of_ask_era import *
 from .events.oracle.new_purchase_request import *
+from .events.oracle.pay_for_purchase import *
+from .events.oracle.purchase_avg_price import *
 
 from .events.session.new_session import *
 

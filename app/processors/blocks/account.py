@@ -96,8 +96,9 @@ class AccountBlockProcessor(BlockProcessor):
     def update_account_info(self, account: Account):
         try:
             account_info_data_storage = utils.query_storage(pallet_name='System', storage_name='Account',
-                                                    substrate=self.substrate, params=['0x{}'.format(account.id)],
-                                                    block_hash=self.block.hash)
+                                                            substrate=self.substrate,
+                                                            params=['0x{}'.format(account.id)],
+                                                            block_hash=self.block.hash)
             if account_info_data_storage:
                 account_info_data = account_info_data_storage.value
                 account.balance_free = account_info_data["data"]["free"]
