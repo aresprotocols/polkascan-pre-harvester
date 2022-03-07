@@ -10,7 +10,8 @@ class SomeOffline(EventProcessor):
         for item in self.event.attributes[0]['value']:
             search_index = self.add_search_index(
                 index_type_id=SEARCH_INDEX_IMONLINE_SOMEOFFLINE,
-                account_id=item['validatorId'].replace('0x', ''),
+                # account_id=item['validatorId'].replace('0x', ''),
+                account_id=item[0].replace('0x', ''),
                 sorting_value=None
             )
 
