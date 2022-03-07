@@ -808,12 +808,12 @@ class PriceRequest(BaseModel):
     __tablename__ = 'data_price_request'
 
     order_id = sa.Column(sa.String(length=100), primary_key=True)
-    created_by = sa.Column(sa.String(length=64), nullable=False, index=True)
+    created_by = sa.Column(sa.String(length=64), nullable=True, index=True)
     symbols = sa.Column(sa.JSON(), nullable=True)
-    status = sa.Column(sa.Integer(), nullable=False) # 0: pending,  1: successful, 2: failed
-    prepayment = sa.Column(sa.Numeric(precision=65, scale=0), nullable=False)
-    payment = sa.Column(sa.Numeric(precision=65, scale=0), nullable=False)
+    status = sa.Column(sa.Integer(), nullable=True) # 0: pending,  1: successful, 2: failed
+    prepayment = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True)
+    payment = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True)
     auth = sa.Column(sa.JSON(), nullable=True)
     result = sa.Column(sa.JSON(), nullable=True)
-    created_at = sa.Column(sa.Integer(), nullable=False, index=True)
+    created_at = sa.Column(sa.Integer(), nullable=True, index=True)
     ended_at = sa.Column(sa.Integer(), nullable=True)

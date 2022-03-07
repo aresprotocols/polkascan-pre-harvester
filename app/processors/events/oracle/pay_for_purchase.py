@@ -14,6 +14,10 @@ class PayForPurchaseEventProcessor(EventProcessor):
         if price_request:
             price_request.payment = fee
             price_request.status = 1
-            price_request.save(db_session)
         else:
-            print("price_request not exist skip this event")
+            price_request: PriceRequest = PriceRequest(
+                order_id=purchase_id,
+                payment=fee,
+                status=1,  # 0: pending,  1: successful, 2: failed
+            )
+        price_request.save(db_session)

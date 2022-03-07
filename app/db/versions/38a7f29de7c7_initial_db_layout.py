@@ -700,14 +700,14 @@ def upgrade():
 
     op.create_table('data_price_request',
     sa.Column('order_id', sa.String(length=100), nullable=False),
-    sa.Column('created_by', sa.String(length=64), nullable=False),
+    sa.Column('created_by', sa.String(length=64), nullable=True),
     sa.Column('symbols', sa.JSON(), nullable=True),
-    sa.Column('status', sa.Integer(), nullable=False),
-    sa.Column('prepayment', sa.Numeric(precision=65, scale=0), nullable=False),
-    sa.Column('payment', sa.Numeric(precision=65, scale=0), nullable=False),
+    sa.Column('status', sa.Integer(), nullable=True),
+    sa.Column('prepayment', sa.Numeric(precision=65, scale=0), nullable=True),
+    sa.Column('payment', sa.Numeric(precision=65, scale=0), nullable=True),
     sa.Column('result', sa.JSON(), nullable=True),
     sa.Column('auth', sa.JSON(), nullable=True),
-    sa.Column('created_at', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.Integer(), nullable=True),
     sa.Column('ended_at', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('order_id')
     )
