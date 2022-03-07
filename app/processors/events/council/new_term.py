@@ -28,8 +28,10 @@ class CouncilNewTermEventProcessor(EventProcessor):
         for member_struct in self.event.attributes[0]['value']:
             search_index = self.add_search_index(
                 index_type_id=SEARCH_INDEX_COUNCIL_MEMBER_ELECTED,
-                account_id=member_struct['account'].replace('0x', ''),
-                sorting_value=member_struct['balance']
+                # account_id=member_struct['account'].replace('0x', ''),
+                # sorting_value=member_struct['balance']
+                account_id=member_struct[0].replace('0x', ''),
+                sorting_value=member_struct[1]
             )
 
             search_index.save(db_session)
