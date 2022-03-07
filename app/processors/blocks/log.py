@@ -23,12 +23,17 @@ class LogBlockProcessor(BlockProcessor):
                 engine_id = bytes.fromhex(log_digest.value[log_type][0][2:]).decode('utf-8')
                 if engine_id == 'aura' and 'PreRuntime' == log_type:
                     predigest_data = log_digest.value['PreRuntime'][1]
-                    if predigest_data[:2] != '0x':
-                        predigest_data = f"0x{predigest_data.encode().hex()}"
+                    try:
+                        if predigest_data[:2] != '0x':
+                            predigest_data = ScaleBytes(f"0x{predigest_data.encode().hex()}")
+                        else:
+                            predigest_data = ScaleBytes(predigest_data)
+                    except ValueError:
+                        predigest_data = ScaleBytes(f"0x{predigest_data.encode().hex()}")
                     aura_predigest = self.substrate.runtime_config.create_scale_object(
                         type_string='RawAuraPreDigest',
                         # data=ScaleBytes(log_digest.value['PreRuntime'][1])
-                        data=ScaleBytes(predigest_data)
+                        data=predigest_data
                     )
                     aura_predigest.decode()
                     slot_number = aura_predigest.value['slot_number']
