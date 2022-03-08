@@ -113,10 +113,9 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
 
     add_count = 0
 
-    try:
-
-        for nr in range(0, BLOCKS_LIMIT):
-            if not block or block.id > 0:
+    for nr in range(0, BLOCKS_LIMIT):
+        if not block or block.id > 0:
+            try:
                 # Process block
                 block = harvester.add_block(block_hash)
 
@@ -132,20 +131,19 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
 
                 # Continue with parent block hash
                 block_hash = block.parent_hash
+            except BlockAlreadyAdded as e:
+                print('. Skipped {} '.format(block_hash))
+            except IntegrityError as e:
+                print('. Skipped duplicate {} '.format(block_hash))
+            except Exception as exc:
+                print('! ERROR adding {}'.format(block_hash))
+                raise HarvesterCouldNotAddBlock(block_hash) from exc
 
-        # Update persistent metadata store in Celery task
-        self.metadata_store = harvester.metadata_store
+    # Update persistent metadata store in Celery task
+    self.metadata_store = harvester.metadata_store
 
-        if block_hash != end_block_hash and block and block.id > 0:
-            accumulate_block_recursive.delay(block.parent_hash, end_block_hash)
-
-    except BlockAlreadyAdded as e:
-        print('. Skipped {} '.format(block_hash))
-    except IntegrityError as e:
-        print('. Skipped duplicate {} '.format(block_hash))
-    except Exception as exc:
-        print('! ERROR adding {}'.format(block_hash))
-        raise HarvesterCouldNotAddBlock(block_hash) from exc
+    if block_hash != end_block_hash and block and block.id > 0:
+        accumulate_block_recursive.delay(block.parent_hash, end_block_hash)
 
     return {
         'result': '{} blocks added'.format(add_count),
