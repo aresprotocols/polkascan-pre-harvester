@@ -8,6 +8,8 @@ class AggregatedPriceEventProcessor(EventProcessor):
 
     def accumulation_hook(self, db_session):
         prices = self.event.attributes[0]['value']
+        if self.block.id == 732801:
+            return
         for price in prices:
             snapshot = SymbolSnapshot(
                 block_id=self.block.id,
