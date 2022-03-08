@@ -132,7 +132,7 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
                 # Continue with parent block hash
                 block_hash = block.parent_hash
             except BlockAlreadyAdded as e:
-                block = Block.query(self.db_session).filter_by(hash=block_hash).first()
+                block = Block.query(self.session).filter_by(hash=block_hash).first()
                 print('. Skipped {} '.format(block_hash))
                 block_hash = block.parent_hash
             except IntegrityError as e:
