@@ -135,6 +135,8 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
                 block = Block.query(self.session).filter_by(hash=block_hash).first()
                 print('. Skipped {} '.format(block_hash))
                 block_hash = block.parent_hash
+                if block_hash == end_block_hash or block.id == 0:
+                    break
             except IntegrityError as e:
                 print('. Skipped duplicate {} '.format(block_hash))
             except Exception as exc:
