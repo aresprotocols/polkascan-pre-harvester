@@ -9,7 +9,8 @@ class CouncilNewTermEventProcessor(EventProcessor):
 
     def sequencing_hook(self, db_session, parent_block, parent_sequenced_block):
         new_member_ids = [
-            member_struct['account'].replace('0x', '') for member_struct in self.event.attributes[0]['value']
+            # member_struct['account'].replace('0x', '') for member_struct in self.event.attributes[0]['value']
+            member_struct[0].replace('0x', '') for member_struct in self.event.attributes[0]['value']
         ]
 
         Account.query(db_session).filter(
