@@ -829,7 +829,8 @@ class PolkascanHarvesterService(BaseService):
                     extrinsic = None
 
             for processor_class in ProcessorRegistry().get_event_processors(event.module_id, event.event_id):
-                event_processor = processor_class(block, event, extrinsic, substrate=self.substrate)
+                event_processor = processor_class(block=block, event=event, extrinsic=extrinsic,
+                                                  substrate=self.substrate, sequenced_block=sequenced_block)
                 event_processor.sequencing_hook(
                     self.db_session,
                     parent_block_data,
