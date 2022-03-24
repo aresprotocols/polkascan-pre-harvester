@@ -793,9 +793,12 @@ class PolkascanHarvesterService(BaseService):
         if spec_version not in self.substrate.metadata_cache:
             self.substrate.init_runtime(block_hash=block.hash)
 
+        total_treasury_burn = 0
+        if parent_sequenced_block_data:
+            total_treasury_burn = parent_sequenced_block_data.get('total_treasury_burn', 0)
         sequenced_block = BlockTotal(
             id=block.id,
-            total_treasury_burn=0  # update by event processor
+            total_treasury_burn=total_treasury_burn  # update by event processor
         )
 
         # Process block processors
