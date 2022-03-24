@@ -418,12 +418,14 @@ class PolkascanHarvesterService(BaseService):
                             # Decode value
                             try:
                                 constant_value = constant.value_object['value'].value_object
-                                decode_constant_type = constant.type if self.substrate.implements_scaleinfo() else constant.value.get("type")
+                                decode_constant_type = constant.type if self.substrate.implements_scaleinfo() else constant.value.get(
+                                    "type")
                                 value_obj = self.substrate.runtime_config.create_scale_object(
                                     decode_constant_type, data=ScaleBytes(constant_value)
                                 )
                                 value_obj.decode()
-                                constant_type = value_obj.type_name if self.substrate.implements_scaleinfo() and hasattr(value_obj, "type_name") else constant.type
+                                constant_type = value_obj.type_name if self.substrate.implements_scaleinfo() and hasattr(
+                                    value_obj, "type_name") else constant.type
                                 value = value_obj.serialize()
                             except ValueError:
                                 print("constant error:1, type:{}, name:{}", constant.type, constant.name)
@@ -951,7 +953,7 @@ class PolkascanHarvesterService(BaseService):
 
         sequencer_parent_block = BlockTotal.query(self.db_session).filter_by(id=sequencer_head).first()
         parent_block = Block.query(self.db_session).filter_by(id=sequencer_head).first()
-
+        print(f"sequence_block from {sequencer_head + 1} to {integrity_head.value}")
         for block_nr in range(sequencer_head + 1, int(integrity_head.value) + 1):
 
             if block_nr == 0:
