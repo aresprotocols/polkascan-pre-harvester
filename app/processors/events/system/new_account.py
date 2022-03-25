@@ -11,7 +11,7 @@ class SystemNewAccountEventProcessor(EventProcessor):
     def accumulation_hook(self, db_session):
         # Check event requirements
         if len(self.event.attributes) == 1 and \
-                self.event.attributes[0]['type'] == 'AccountId':
+                (self.event.attributes[0]['type'] == 'AccountId' or self.event.attributes[0]['type'] == 'T::AccountId'):
             account_id = self.event.attributes[0]['value'].replace('0x', '')
 
             self.block._accounts_new.append(account_id)
