@@ -42,9 +42,18 @@ class LogBlockProcessor(BlockProcessor):
                     log_inner_data = {"data": log_digest.value['Seal'][1], "engine": "aura"}
 
                 elif engine_id == 'BABE' and 'PreRuntime' == log_type:
+                    predigest_data = log_digest.value['PreRuntime'][1]
+                    try:
+                        if predigest_data[:2] != '0x':
+                            predigest_data = ScaleBytes(f"0x{predigest_data.encode().hex()}")
+                        else:
+                            predigest_data = ScaleBytes(predigest_data)
+                    except ValueError:
+                        predigest_data = ScaleBytes(f"0x{predigest_data.encode().hex()}")
                     babe_predigest = self.substrate.runtime_config.create_scale_object(
                         type_string='RawBabePreDigest',
-                        data=ScaleBytes(log_digest.value['PreRuntime'][1])
+                        # data=ScaleBytes(log_digest.value['PreRuntime'][1])
+                        data=predigest_data
                     )
                     babe_predigest.decode()
                     rank_validator = babe_predigest[1].value['authority_index']
