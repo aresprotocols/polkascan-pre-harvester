@@ -12,7 +12,7 @@ class KilledAccount(EventProcessor):
         print(self.event.attributes)
         # Check event requirements
         if len(self.event.attributes) == 1 and \
-                self.event.attributes[0]['type'] == 'AccountId':
+                (self.event.attributes[0]['type'] == 'T::AccountId' or self.event.attributes[0]['type'] == 'AccountId'):
 
             account_id = self.event.attributes[0]['value'].replace('0x', '')
         else:
