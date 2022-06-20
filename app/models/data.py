@@ -810,10 +810,21 @@ class PriceRequest(BaseModel):
     order_id = sa.Column(sa.String(length=100), primary_key=True)
     created_by = sa.Column(sa.String(length=64), nullable=True, index=True)
     symbols = sa.Column(sa.JSON(), nullable=True)
-    status = sa.Column(sa.Integer(), nullable=True) # 0: pending,  1: successful, 2: failed
+    status = sa.Column(sa.Integer(), nullable=True)  # 0: pending,  1: successful, 2: failed
     prepayment = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True)
     payment = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True)
     auth = sa.Column(sa.JSON(), nullable=True)
     result = sa.Column(sa.JSON(), nullable=True)
     created_at = sa.Column(sa.Integer(), nullable=True, index=True)
     ended_at = sa.Column(sa.Integer(), nullable=True)
+
+
+class EstimatesParticipants(BaseModel):
+    __tablename__ = 'data_estimates_participants'
+    symbol = sa.Column(sa.String(length=30), primary_key=True, nullable=False)
+    estimate_id = sa.Column(sa.Integer(), primary_key=True, nullable=False)
+    estimate_type = sa.Column(sa.String(length=30), primary_key=True, nullable=False, index=True)
+    participant = sa.Column(sa.String(length=64), primary_key=True, nullable=False)
+    price = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True)
+    option_index = sa.Column(sa.Integer(), nullable=True)
+    created_at = sa.Column(sa.Integer(), nullable=False)
