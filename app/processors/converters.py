@@ -238,12 +238,14 @@ class PolkascanHarvesterService(BaseService):
                 self.metadata_store[spec_version] = self.substrate.metadata_cache[spec_version]
             else:
                 # self.substrate.init_runtime(block_hash)
+                # What do?
                 self.metadata_store[spec_version] = self.substrate.metadata_decoder
 
         else:
             print('Metadata: CACHE MISS', spec_version)
 
             runtime_version_data = self.substrate.get_block_runtime_version(block_hash)
+            # Call and get runtime infos.
             self.substrate.init_runtime(block_hash)
             modules = self.substrate.metadata_decoder.pallets
 

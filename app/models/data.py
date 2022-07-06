@@ -556,7 +556,8 @@ class RuntimeConstant(BaseModel):
     index = sa.Column(sa.Integer())
     name = sa.Column(sa.String(255), index=True)
     type = sa.Column(sa.String(255))
-    value = sa.Column(sa.String(255))
+    # value = sa.Column(sa.String(255))
+    value = sa.Column(sa.Text())
     documentation = sa.Column(sa.Text())
 
     def serialize_id(self):
@@ -815,6 +816,14 @@ class PriceRequest(BaseModel):
     payment = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True)
     auth = sa.Column(sa.JSON(), nullable=True)
     result = sa.Column(sa.JSON(), nullable=True)
+    created_at = sa.Column(sa.Integer(), nullable=True, index=True)
+    ended_at = sa.Column(sa.Integer(), nullable=True)
+
+
+class KamiTest(BaseModel):
+    __tablename__ = 'data_kami_test'
+
+    id = sa.Column(sa.Integer(), primary_key=True)
     created_at = sa.Column(sa.Integer(), nullable=True, index=True)
     ended_at = sa.Column(sa.Integer(), nullable=True)
 

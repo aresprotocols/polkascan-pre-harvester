@@ -30,6 +30,8 @@ DB_CONNECTION = os.environ.get("DB_CONNECTION", "mysql+mysqlconnector://{}:{}@{}
     DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 ))
 
+# print("DB_USERNAME=%s, DB_PASSWORD=%s, DB_HOST=%s, DB_PORT=%s, DB_NAME=%s" % (DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME))
+
 SUBSTRATE_RPC_URL = os.environ.get("SUBSTRATE_RPC_URL", "http://substrate-node:9933/")
 SUBSTRATE_ADDRESS_TYPE = int(os.environ.get("SUBSTRATE_ADDRESS_TYPE", 42))
 
