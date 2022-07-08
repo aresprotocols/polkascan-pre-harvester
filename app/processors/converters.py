@@ -895,13 +895,14 @@ class PolkascanHarvesterService(BaseService):
                     if parent_block:
                         if block.id != parent_block.id + 1:
 
+                            check_block_hash = self.substrate.get_block_hash(integrity_head.value)
                             # Save integrity head if block hash of parent matches with hash in node
-                            if parent_block.hash == self.substrate.get_block_hash(integrity_head.value):
+                            if parent_block.hash == check_block_hash:
                                 integrity_head.save(self.db_session)
                                 self.db_session.commit()
 
                             raise BlockIntegrityError(
-                                'ERROR: Block #{} is missing.. stopping check '.format(parent_block.id + 1))
+                                'ERROR: Block #{} is missing.. stopping check Check hash: {}'.format(parent_block.id + 1, check_block_hash))
                         elif block.parent_hash != parent_block.hash:
 
                             self.process_reorg_block(parent_block)
@@ -945,7 +946,7 @@ class PolkascanHarvesterService(BaseService):
 
     def start_sequencer(self):
         print("RUN X start_sequencer start")
-        self.integrity_checks()
+        self.integrity_checks() #
         self.db_session.commit()
 
         block_nr = None
