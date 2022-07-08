@@ -901,6 +901,11 @@ class PolkascanHarvesterService(BaseService):
                                 integrity_head.save(self.db_session)
                                 self.db_session.commit()
 
+                            try:
+                                self.add_block(check_block_hash)
+                            except Exception as e:
+                                print('ERROR on Kami add-blcok : #{}, #{}', e.__class__, e.__context__)
+
                             raise BlockIntegrityError(
                                 'ERROR: Block #{} is missing.. stopping check Check hash: {}'.format(parent_block.id + 1, check_block_hash))
                         elif block.parent_hash != parent_block.hash:
