@@ -35,10 +35,11 @@ from app.extend.base import AresSubstrateInterface, CompatibleRuntimeConfigurati
 from app.models.data import Extrinsic, Block, Event, Runtime, RuntimeModule, RuntimeCall, RuntimeCallParam, \
     RuntimeEvent, RuntimeEventAttribute, RuntimeType, RuntimeStorage, BlockTotal, RuntimeConstant, AccountAudit, \
     AccountIndexAudit, ReorgBlock, ReorgExtrinsic, ReorgEvent, ReorgLog, RuntimeErrorMessage, Account, \
-    AccountInfoSnapshot, SearchIndex
+    AccountInfoSnapshot, SearchIndex, SymbolSnapshot
 from app.models.harvester import Status
 from app.processors import NewSessionEventProcessor, Log
 from app.processors.base import BaseService, ProcessorRegistry
+from app.processors.events.oracle.aggregated_price import AggregatedPriceEventProcessor
 
 if settings.DEBUG:
     # Set Logger level to Debug
@@ -902,6 +903,8 @@ class PolkascanHarvesterService(BaseService):
                                 self.db_session.commit()
 
                             try:
+                                for item in SymbolSnapshot.query(self.db_session).filter_by(block_id=parent_block.id + 1):
+                                    self.db_session.delete(item)
                                 self.add_block(check_block_hash)
                             except Exception as e:
                                 print('KAMI TRY ADD {}, #{}, #{}'.format(check_block_hash, e.__class__, e.__context__))
