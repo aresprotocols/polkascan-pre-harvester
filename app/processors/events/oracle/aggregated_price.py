@@ -22,5 +22,6 @@ class AggregatedPriceEventProcessor(EventProcessor):
             snapshot.save(db_session)
 
     def accumulation_revert(self, db_session):
+        print("RUN KAMI-DEBUG:: accumulation_revert ", self.block.id)
         for item in SymbolSnapshot.query(db_session).filter_by(block_id=self.block.id):
             db_session.delete(item)
