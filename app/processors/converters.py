@@ -901,7 +901,7 @@ class PolkascanHarvesterService(BaseService):
                                 self.db_session.commit()
 
                             raise BlockIntegrityError(
-                                'Block #{} is missing.. stopping check '.format(parent_block.id + 1))
+                                'ERROR: Block #{} is missing.. stopping check '.format(parent_block.id + 1))
                         elif block.parent_hash != parent_block.hash:
 
                             self.process_reorg_block(parent_block)
@@ -923,7 +923,7 @@ class PolkascanHarvesterService(BaseService):
                             self.db_session.commit()
 
                             raise BlockIntegrityError(
-                                'Block #{} failed integrity checks, Re-adding #{}.. '.format(parent_block.id, block.id))
+                                'ERROR: Block #{} failed integrity checks, Re-adding #{}.. '.format(parent_block.id, block.id))
                         else:
                             integrity_head.value = block.id
 

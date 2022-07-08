@@ -114,7 +114,7 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
     add_count = 0
 
     try:
-        for nr in range(0, BLOCKS_LIMIT):
+        for nr in range(0, BLOCKS_LIMIT): # LIMIT = 100
             if not block or block.id > 0:
                 # Process block
                 block = harvester.add_block(block_hash)

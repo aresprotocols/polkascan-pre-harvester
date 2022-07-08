@@ -20,3 +20,7 @@ class AggregatedPriceEventProcessor(EventProcessor):
                 created_at=self.block.datetime
             )
             snapshot.save(db_session)
+
+    def accumulation_revert(self, db_session):
+        for item in SymbolSnapshot.query(db_session).filter_by(block_id=self.block.id):
+            db_session.delete(item)
