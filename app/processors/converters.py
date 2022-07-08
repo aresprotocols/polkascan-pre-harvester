@@ -910,7 +910,7 @@ class PolkascanHarvesterService(BaseService):
                                 print('KAMI TRY ADD {}, #{}, #{}'.format(check_block_hash, e.__class__, e.__context__))
 
                             raise BlockIntegrityError(
-                                'ERROR: Block #{} is missing.. stopping check #{} '.format(parent_block.id + 1))
+                                'ERROR Block #{} is missing.. stopping check '.format(parent_block.id + 1))
                         elif block.parent_hash != parent_block.hash:
 
                             self.process_reorg_block(parent_block)
