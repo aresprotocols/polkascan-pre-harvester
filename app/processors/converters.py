@@ -575,7 +575,7 @@ class PolkascanHarvesterService(BaseService):
 
             for event in events_decoder:
                 event.value['module_id'] = event.value['module_id'].lower()
-
+                # print('module_id', event.value['module_id'])
                 model = Event(
                     block_id=block_id,
                     event_idx=event_idx,
@@ -648,9 +648,9 @@ class PolkascanHarvesterService(BaseService):
             #     era = extrinsics_decoder.era.raw_value
             # else:
             value = extrinsic.value
-            # print(value)
-            # print("=====extrinsic.value=====")
-            # print(extrinsic.value_object)
+            print(value)
+            print("=====extrinsic.value=====")
+            print(extrinsic.value_object)
             era = None
             if 'era' in value:
                 era = ','.join(map(str, value.get('era')))
@@ -724,6 +724,7 @@ class PolkascanHarvesterService(BaseService):
 
             # Process extrinsic processors
             for processor_class in ProcessorRegistry().get_extrinsic_processors(model.module_id, model.call_id):
+                print("RUN get_extrinsic_processors . ", model.module_id, model.call_id)
                 extrinsic_processor = processor_class(block, model, substrate=self.substrate)
                 extrinsic_processor.accumulation_hook(self.db_session)
                 extrinsic_processor.process_search_index(self.db_session)
@@ -791,13 +792,18 @@ class PolkascanHarvesterService(BaseService):
         self.db_session.delete(block)
 
     def sequence_block(self, block: Block, parent_block_data=None, parent_sequenced_block_data=None):
+        print('RUN 0 Check BlockTotal')
+
         spec_version = block.spec_version_id
         if spec_version not in self.substrate.metadata_cache:
             self.substrate.init_runtime(block_hash=block.hash)
 
         total_treasury_burn = 0
+        print('RUN 1 Check BlockTotal')
         if parent_sequenced_block_data:
+            print('RUN 2 Check BlockTotal')
             total_treasury_burn = parent_sequenced_block_data.get('total_treasury_burn', 0)
+        print('RUN 3 Check BlockTotal')
         sequenced_block = BlockTotal(
             id=block.id,
             total_treasury_burn=total_treasury_burn  # update by event processor
@@ -938,6 +944,7 @@ class PolkascanHarvesterService(BaseService):
         return {'integrity_head': integrity_head.value}
 
     def start_sequencer(self):
+        print("RUN X start_sequencer start")
         self.integrity_checks()
         self.db_session.commit()
 

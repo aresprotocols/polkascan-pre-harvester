@@ -141,7 +141,7 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
     except BlockAlreadyAdded as e:
         print('. Skipped {} '.format(block_hash))
     except IntegrityError as e:
-        print('. Skipped duplicate {} '.format(block_hash))
+        print('. KAMI DEBUG - Skipped duplicate {} '.format(block_hash), e.__traceback__)
     except Exception as exc:
         print('! ERROR adding {}'.format(block_hash))
         raise HarvesterCouldNotAddBlock(block_hash) from exc
