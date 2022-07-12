@@ -981,6 +981,7 @@ class PolkascanHarvesterService(BaseService):
         sequencer_parent_block = BlockTotal.query(self.db_session).filter_by(id=sequencer_head).first()
         parent_block = Block.query(self.db_session).filter_by(id=sequencer_head).first()
 
+        print(f"Kami: sequencer range:{sequencer_head+1} to {int(integrity_head.value) + 1}")
         for block_nr in range(sequencer_head + 1, int(integrity_head.value) + 1):
 
             if block_nr == 0:
