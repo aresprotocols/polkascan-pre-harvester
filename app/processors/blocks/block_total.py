@@ -6,7 +6,7 @@ import dateutil
 class BlockTotalProcessor(BlockProcessor):
 
     def sequencing_hook(self, db_session, parent_block_data, parent_sequenced_block_data):
-        # print('RUN 1 sequencing_hook OF BlockTotalProcessor start')
+        print('RUN 1 sequencing_hook Of BlockTotalProcessor start')
         if not parent_sequenced_block_data:
             parent_sequenced_block_data = {}
 
