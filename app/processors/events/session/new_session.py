@@ -331,7 +331,7 @@ class NewSessionEventProcessor(EventProcessor):
                         validator_session = substrate.get_storage(
                             block_hash=self.block.hash,
                             module="Session",
-                            function="NextKeyFor",
+                            function="NextKey",
                             params=[validator_controller],
                             return_scale_type=storage_call.get_return_type(),
                             hasher=storage_call.type_hasher,
