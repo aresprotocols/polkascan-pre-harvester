@@ -914,6 +914,7 @@ class PolkascanHarvesterService(BaseService):
 
                             raise BlockIntegrityError(
                                 'Kami Block #{} is missing.. stopping check '.format(parent_block.id + 1))
+
                         elif block.parent_hash != parent_block.hash:
 
                             self.process_reorg_block(parent_block)
@@ -933,6 +934,8 @@ class PolkascanHarvesterService(BaseService):
                             # if parent_block.parent_hash == substrate.get_block_hash(integrity_head.value):
                             integrity_head.save(self.db_session)
                             self.db_session.commit()
+
+                            print('Kami parent_hash != hash {}!={}'.format(block.parent_hash, parent_block.hash))
 
                             raise BlockIntegrityError(
                                 'ERROR: Block #{} failed integrity checks, Re-adding #{}.. '.format(parent_block.id, block.id))
@@ -957,7 +960,7 @@ class PolkascanHarvesterService(BaseService):
 
     def start_sequencer(self):
         print("RUN X start_sequencer start")
-        self.integrity_checks() #
+        self.integrity_checks()
         self.db_session.commit()
 
         block_nr = None
