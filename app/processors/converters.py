@@ -70,12 +70,14 @@ class PolkascanHarvesterService(BaseService):
         else:
             custom_type_registry = None
 
+        print('RUN KAMI-PolkascanHarvesterService')
         self.substrate = AresSubstrateInterface(
             url=settings.SUBSTRATE_RPC_URL,
             type_registry=custom_type_registry,
             type_registry_preset=type_registry,
             runtime_config=CompatibleRuntimeConfiguration()
         )
+        print('RUN KAMI-DEBUG runtime-version:{}'.format(self.substrate.runtime_version))
         self.metadata_store = {}
 
     def process_genesis(self, block):
@@ -229,7 +231,7 @@ class PolkascanHarvesterService(BaseService):
     #  before process_metadata get_block had called init_runtime
     ###
     def process_metadata(self, spec_version, block_hash):
-
+        print('Kami Debug spec_version={}, block_hash={},'.format(spec_version,block_hash))
         # Check if metadata already stored
         runtime = Runtime.query(self.db_session).get(spec_version)
 
