@@ -35,3 +35,8 @@ class ParticipateEstimates(EventProcessor):
         )
 
         participant.save(db_session)
+
+    def accumulation_revert(self, db_session):
+        print("estimates.participate - accumulation_revert ", self.block.id)
+        for item in EstimatesParticipants.query(db_session).filter_by(block_id=self.block.id):
+            db_session.delete(item)
