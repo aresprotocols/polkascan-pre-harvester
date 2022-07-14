@@ -38,9 +38,9 @@ from app.settings import DB_CONNECTION, DEBUG, TYPE_REGISTRY, FINALIZATION_ONLY,
 
 CELERY_BROKER = os.environ.get('CELERY_BROKER')
 CELERY_BACKEND = os.environ.get('CELERY_BACKEND')
+BLOCKS_LIMIT = 100
 
 app = celery.Celery('tasks', broker=CELERY_BROKER, backend=CELERY_BACKEND)
-BLOCKS_LIMIT = 100
 
 app.conf.beat_schedule = {
     'check-head-10-seconds': {
