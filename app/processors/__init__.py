@@ -63,6 +63,8 @@ from .events.oracle.new_purchase_request import *
 from .events.oracle.pay_for_purchase import *
 from .events.oracle.purchase_avg_price import *
 
+# from .events.manual_bridge.stash_updated import *
+
 from .events.session.new_session import *
 
 from .events.staking.slash import *
@@ -103,3 +105,5 @@ from .extrinsics.treasury.propose_spend import *
 from .extrinsics.identity_set_subs import *
 from .extrinsics.sudo import *
 from .extrinsics.timestamp import *
+
+

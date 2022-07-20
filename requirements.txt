@@ -48,4 +48,4 @@ py-ed25519-bindings>=0.1.2
 py-bip39-bindings>=0.1.6
 
 scalecodec~=1.0.19
-substrate-interface~=1.1.1
+substrate-interface~=1.2.7

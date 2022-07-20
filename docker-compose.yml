@@ -7,6 +7,7 @@ services:
     image: &app polkascan-harvester
     ports:
       - '8000:8000'
+      - '8001:8001'
     volumes:
       - '.:/usr/src/app'
     command: ./start.sh
@@ -15,6 +16,19 @@ services:
       - CELERY_BACKEND=redis://redis:6379/0
       - PYTHONPATH=/usr/src/app
       - ENVIRONMENT=dev
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=polkascan
+      - DB_NAME=polkascan
+#      - SUBSTRATE_RPC_URL=wss://gladios.aresprotocol.io/
+      - SUBSTRATE_RPC_URL=ws://substrate-node:9944
+#      - SUBSTRATE_RPC_URL=ws://202.182.100.187:7644
+      - SUBSTRATE_ADDRESS_TYPE=34
+      - SUBSTRATE_METADATA_VERSION=9
+      - TYPE_REGISTRY=kusama
+      - SUBSTRATE_STORAGE_INDICES=Accounts
+      - NEW_SESSION_EVENT_HANDLER=True
     depends_on:
       - redis
       - mysql
@@ -27,15 +41,18 @@ services:
       - '.:/usr/src/app'
     command: celery -A app.tasks worker --loglevel=INFO
     environment: *env
+    privileged: true
     depends_on:
       - redis
       - mysql
+      - harvester-api
 
   harvester-beat:
     build: .
     image: *app
     volumes:
       - '.:/usr/src/app'
+    privileged: true
     command: celery -A app.tasks beat --loglevel=INFO  --schedule="data/celerybeat-schedule" --pidfile="data/celerybeat.pid"
     environment: *env
     depends_on:
@@ -52,21 +69,40 @@ services:
 
   redis:
     image: redis:3.2.11
+    ports:
+      - '5672:6379'
 
   mysql:
-    image: mysql:latest
+    image: 'mysql/mysql-server:8.0'
     volumes:
-      - './data/mysql:/var/lib/mysql'
+      - 'sail-mysql:/var/lib/mysql'
     ports:
-      - '33061:3306'
+      - '3386:3306'
+    privileged: true
     environment:
-      - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=polkascan
+      MYSQL_ROOT_PASSWORD: 'polkascan'
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: 'polkascan'
+      MYSQL_USER: ""
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
 
   substrate-node:
-    image: polkasource/substrate-alexander:latest
+    image: "aresprotocollab/ares_gladios:latest"
     ports:
-      - '30333:30333'
-      - '9933:9933'
-      - '9944:9944'
-    command: --dev --rpc-port 9933 --rpc-external --pruning=10000000
+      - '31333:30333'
+      - '19933:9933'
+      - '19944:9944'
+    command: >
+      gladios-node --dev --name test_harvester --execution Native --pruning archive
+      --ws-external --rpc-external --rpc-cors=all --rpc-methods=Unsafe
+      --prometheus-external --port 30333
+      --warehouse 'http://api.aresprotocol.io'
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "10"
+
+volumes:
+  sail-mysql:
+      driver: local

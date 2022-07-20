@@ -15,6 +15,9 @@ class ParticipateEstimates(EventProcessor):
             estimate_id = self.event.attributes[1]['value']
             participant = self.event.attributes[3]['value'].replace('0x', '')
             price = self.event.attributes[2]['value']['estimates']
+            estimate_type = 'price'
+            if price is None:
+                estimate_type = 'range'
         else:
             raise ValueError('Event doensn\'t meet requirements')
 
@@ -29,6 +32,7 @@ class ParticipateEstimates(EventProcessor):
         participant = EstimatesParticipants(
             symbol=symbol,
             estimate_id=estimate_id,
+            estimate_type=estimate_type,
             participant=participant,
             price=price,
             block_id=self.event.block_id
