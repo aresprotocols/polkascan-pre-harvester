@@ -729,15 +729,15 @@ def upgrade():
                     sa.Column('block_id', sa.Integer(), nullable=False),
                     sa.Column('symbol', sa.String(length=30), nullable=False),
                     sa.Column('estimate_id', sa.Integer(), nullable=False),
-                    # sa.Column('estimate_type', sa.String(length=30), nullable=False),
+                    sa.Column('estimate_type', sa.String(length=30), nullable=False),
                     sa.Column('participant', sa.String(length=64), nullable=False),
                     sa.Column('price', sa.Numeric(precision=65, scale=0), nullable=True),
-                    # sa.Column('option_index', sa.Integer(), nullable=False),
+                    sa.Column('option_index', sa.Integer(), nullable=True),
                     # sa.Column('created_at', sa.Integer(), nullable=False),
                     sa.PrimaryKeyConstraint('symbol', 'estimate_id', 'participant')
                     )
-    # op.create_index(op.f('ix_data_estimates_participants_estimate_type'), 'data_estimates_participants',
-    #                 ['estimate_type'], unique=False)
+    op.create_index(op.f('ix_data_estimates_participants_estimate_type'), 'data_estimates_participants',
+                    ['estimate_type'], unique=False)
     op.create_index(op.f('ix_data_estimates_participants_block_id'), 'data_estimates_participants',
                     ['block_id'], unique=False)
     # ### end Alembic commands ###

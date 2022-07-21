@@ -15,24 +15,18 @@ class ParticipateEstimates(EventProcessor):
             estimate_id = self.event.attributes[1]['value']
             participant = self.event.attributes[3]['value'].replace('0x', '')
             price = self.event.attributes[2]['value']['estimates']
+            option_index = self.event.attributes[2]['value']['range_index']
             estimate_type = 'price'
             if price is None:
                 estimate_type = 'range'
         else:
             raise ValueError('Event doensn\'t meet requirements')
 
-        # symbol = sa.Column(sa.String(length=30), primary_key=True, nullable=False)
-        # estimate_id = sa.Column(sa.Integer(), primary_key=True, nullable=False)
-        # estimate_type = sa.Column(sa.String(length=30), primary_key=True, nullable=False, index=True)
-        # participant = sa.Column(sa.String(length=64), primary_key=True, nullable=False)
-        # price = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True)
-        # option_index = sa.Column(sa.Integer(), nullable=True)
-        # created_at = sa.Column(sa.Integer(), nullable=False)
-
         participant = EstimatesParticipants(
             symbol=symbol,
             estimate_id=estimate_id,
             estimate_type=estimate_type,
+            option_index=option_index,
             participant=participant,
             price=price,
             block_id=self.event.block_id
