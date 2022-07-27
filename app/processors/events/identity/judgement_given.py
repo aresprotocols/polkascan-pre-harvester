@@ -11,7 +11,7 @@ class IdentityJudgementGivenEventProcessor(EventProcessor):
 
         # Check event requirements
         if len(self.event.attributes) == 2 and \
-                self.event.attributes[0]['type'] == 'AccountId' and \
+                self.event.attributes[0]['type'] == 'T::AccountId' and \
                 self.event.attributes[1]['type'] == 'RegistrarIndex':
 
             identity_audit = IdentityJudgementAudit(

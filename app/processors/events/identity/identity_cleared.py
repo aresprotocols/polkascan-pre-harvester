@@ -11,8 +11,8 @@ class IdentityClearedEventProcessor(EventProcessor):
 
         # Check event requirements
         if len(self.event.attributes) == 2 and \
-                self.event.attributes[0]['type'] == 'AccountId' and \
-                self.event.attributes[1]['type'] == 'Balance':
+                self.event.attributes[0]['type'] == 'T::AccountId' and \
+                self.event.attributes[1]['type'] == 'BalanceOf<T>':
             identity_audit = IdentityAudit(
                 account_id=self.event.attributes[0]['value'].replace('0x', ''),
                 block_id=self.event.block_id,

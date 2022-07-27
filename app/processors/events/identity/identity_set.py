@@ -11,7 +11,7 @@ class IdentitySetEventProcessor(EventProcessor):
 
         # Check event requirements
         if len(self.event.attributes) == 1 and \
-                self.event.attributes[0]['type'] == 'AccountId':
+                self.event.attributes[0]['type'] == 'T::AccountId':
 
             identity_audit = IdentityAudit(
                 account_id=self.event.attributes[0]['value'].replace('0x', ''),

@@ -49,7 +49,7 @@ class NewAccountEventProcessor(EventProcessor):
     def accumulation_hook(self, db_session):
         # Check event requirements
         if len(self.event.attributes) == 2 and \
-                self.event.attributes[0]['type'] == 'AccountId' and self.event.attributes[1]['type'] == 'Balance':
+                self.event.attributes[0]['type'] == 'T::AccountId' and self.event.attributes[1]['type'] == 'BalanceOf<T>':
             account_id = self.event.attributes[0].replace('0x', '')
             balance = self.event.attributes[1]
 
@@ -93,8 +93,8 @@ class ReapedAccount(EventProcessor):
             account_id = self.event.attributes[0]['value'].replace('0x', '')
 
         elif len(self.event.attributes) == 2 and \
-                self.event.attributes[0]['type'] == 'AccountId' and \
-                self.event.attributes[1]['type'] == 'Balance':
+                self.event.attributes[0]['type'] == 'T::AccountId' and \
+                self.event.attributes[1]['type'] == 'BalanceOf<T>':
 
             account_id = self.event.attributes[0]['value'].replace('0x', '')
         else:
