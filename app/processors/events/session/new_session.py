@@ -3,9 +3,11 @@ from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
 from substrateinterface import SubstrateInterface
 
 from app import settings, utils
-from app.models.data import Session, SessionValidator, SessionTotal, Account, SessionNominator, RuntimeStorage
+from app.models.data import Session, SessionValidator, SessionTotal, Account, SessionNominator, RuntimeStorage, \
+    ValidatorAuditFromChain
 from app.processors.base import EventProcessor
-from app.settings import LEGACY_SESSION_VALIDATOR_LOOKUP, SUBSTRATE_METADATA_VERSION
+from app.settings import LEGACY_SESSION_VALIDATOR_LOOKUP, SUBSTRATE_METADATA_VERSION, SUBSTRATE_ADDRESS_TYPE
+from app.utils.ss58 import ss58_encode
 
 
 class NewSessionEventProcessor(EventProcessor):
@@ -476,6 +478,55 @@ class NewSessionEventProcessor(EventProcessor):
 
     def accumulation_hook(self, db_session):
         self.block.count_sessions_new += 1
+
+        substrate = self.substrate
+        # Update ValidatorAuditFromChain
+
+        # block_hash = substrate.get_chain_finalised_head()
+        # substrate.init_runtime(block_hash=block_hash)
+
+        print('################### KAMI #####', self.block.hash)
+        # aresOracle.finalPerCheckResult
+        # all_final_results = utils.query_storage(pallet_name="AresOracle", storage_name="FinalPerCheckResult",
+        #                                         substrate=substrate,
+        #                                         block_hash=self.block.hash)
+        all_final_results = utils.query_all_storage(pallet_name="AresOracle", storage_name="FinalPerCheckResult",
+                                                substrate=substrate, block_hash=self.block.hash)
+        # // aresOracle.confPreCheckTokenList
+        # pre_check_token_list = utils.query_storage(pallet_name="AresOracle", storage_name="ConfPreCheckTokenList",
+        #                                            substrate=substrate, block_hash=self.block.hash)
+        # current_era = utils.query_storage(pallet_name="Staking", storage_name="CurrentEra", substrate=substrate,
+        #                                   block_hash=self.block.hash).value
+        # print(all_final_results, pre_check_token_list, current_era)
+
+        if (all_final_results):
+            for key in all_final_results:
+                print('###################### KAMI - ', key)
+                task_result = all_final_results[key].value
+                task_validator = ss58_encode(key.replace('0x', ''), SUBSTRATE_ADDRESS_TYPE)
+                task_ares_authority = task_result[3]
+                task_block_number = task_result[0]
+                task_status = task_result[1]
+
+                # ValidatorAuditFromChain
+                validatorAudit: ValidatorAuditFromChain = ValidatorAuditFromChain.query(db_session).filter_by(
+                    validator=task_validator,
+                    ares_authority=task_ares_authority,
+                ).first()
+                if validatorAudit:
+                    # update.
+                    validatorAudit.block_number = task_block_number
+                    validatorAudit.status = task_status
+                    validatorAudit.save(db_session)
+                else:
+                    # insert.
+                    validatorAudit = ValidatorAuditFromChain(
+                        validator=task_validator,
+                        ares_authority=task_ares_authority,
+                        block_number=task_block_number,
+                        status=task_status,
+                    )
+                    validatorAudit.save(db_session)
 
     def sequencing_hook(self, db_session, parent_block_data, parent_sequenced_block_data):
         session_id = self.event.attributes[0]['value']

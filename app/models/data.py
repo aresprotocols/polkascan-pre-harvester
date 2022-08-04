@@ -19,7 +19,7 @@
 #  data.py
 
 import sqlalchemy as sa
-from sqlalchemy import text
+from sqlalchemy import text, UniqueConstraint
 from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import relationship
 
@@ -797,12 +797,23 @@ class SymbolSnapshot(BaseModel):
 class EraPriceRequest(BaseModel):
     __tablename__ = 'data_era_price_request'
 
-    era = sa.Column(sa.Integer(), primary_key=True)
+    id = sa.Column(sa.Integer(), primary_key=True)
+    # era = sa.Column(sa.Integer(), primary_key=True)
+    era = sa.Column(sa.Integer(), unique=True)
     total_eras = sa.Column(sa.Integer(), nullable=False)
     era_total_requests = sa.Column(sa.Integer(), nullable=False)
     era_total_points = sa.Column(sa.Integer(), nullable=False)
     era_total_fee = sa.Column(sa.Numeric(precision=65, scale=0), nullable=False)
     ended_at = sa.Column(sa.Integer(), nullable=True)
+
+class ValidatorAuditFromChain(BaseModel):
+    __tablename__ = 'data_validator_audit_from_chain'
+    id = sa.Column(sa.Integer(), primary_key=True)
+    validator = sa.Column(sa.String(100), nullable=False)
+    ares_authority = sa.Column(sa.String(100), nullable=False)
+    block_number = sa.Column(sa.Integer(), nullable=False)
+    status = sa.Column(sa.String(20), nullable=False)
+    __table_args__ = (UniqueConstraint('validator', 'ares_authority', name='unqiue_validator_ares_authority'),)
 
 
 class PriceRequest(BaseModel):

@@ -8,9 +8,6 @@ class IdentityKilledEventProcessor(EventProcessor):
     event_id = 'IdentityKilled'
 
     def accumulation_hook(self, db_session):
-
-        print("KAMI-DEBUG - IdentityKilled . ")
-        print("KAMI-DEBUG -- ", self.event.attributes)
         # Check event requirements
         if len(self.event.attributes) == 2 and \
                 self.event.attributes[0]['type'] == 'T::AccountId' and \

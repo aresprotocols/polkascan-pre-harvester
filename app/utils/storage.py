@@ -1,6 +1,8 @@
 from scalecodec.types import GenericMetadataVersioned, GenericPalletMetadata, GenericStorageEntryMetadata
 from scalecodec.base import ScaleBytes, RuntimeConfiguration
 from substrateinterface import SubstrateInterface
+from substrateinterface.exceptions import SubstrateRequestException
+
 from app.models.data import RuntimeStorage
 
 
@@ -57,3 +59,29 @@ def query_storage_by_db(storage_obj: RuntimeStorage, substrate: SubstrateInterfa
                  param_types=param_types,
                  param_hashers=storage_obj.get_hashers(), params=params, value_type=storage_obj.type_value,
                  block_hash=block_hash)
+
+
+def query_all_storage(pallet_name: str, storage_name: str, substrate: SubstrateInterface, block_hash) -> {}:
+    module: GenericPalletMetadata = substrate.metadata_decoder.get_metadata_pallet(pallet_name)
+    storage_func: GenericStorageEntryMetadata = module.get_storage_function(storage_name)
+    param_types = storage_func.get_params_type_string()
+    param_hashers = storage_func.get_param_hashers()
+    value_type = storage_func.get_value_type_string()
+    storage_key_prefix = substrate.generate_storage_hash(storage_module=pallet_name, storage_function=storage_name)
+    keys = substrate.rpc_request("state_getKeys", [storage_key_prefix, block_hash]).get("result")
+    response = substrate.rpc_request(method="state_queryStorageAt", params=[keys, block_hash])
+    if 'error' in response:
+        raise SubstrateRequestException(response['error']['message'])
+
+    result = {}
+    for result_group in response['result']:
+        for item in result_group['changes']:
+            item_value = substrate.runtime_config.create_scale_object(type_string=value_type,
+                                                                      data=ScaleBytes(item[1]))
+            # TODO support more hash type & double map
+            a = bytes.fromhex(item[0].replace(storage_key_prefix, ""))[16:]  # ['Blake2_128Concat']
+            item_key = substrate.runtime_config.create_scale_object(type_string=param_types[0], data=ScaleBytes(a))
+            item_key.decode()
+            item_value.decode()
+            result[item_key.value] = item_value
+    return result

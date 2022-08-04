@@ -715,15 +715,26 @@ def upgrade():
     op.create_index(op.f('ix_data_price_request_created_at'), 'data_price_request', ['created_at'], unique=False)
 
     op.create_table('data_era_price_request',
-    sa.Column('era', sa.Integer(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('era', sa.Integer(), nullable=False, unique=True),
     sa.Column('total_eras', sa.Integer(), nullable=False),
     sa.Column('era_total_requests', sa.Integer(), nullable=False),
     sa.Column('era_total_points', sa.Integer(), nullable=False),
     sa.Column('era_total_fee', sa.Numeric(precision=65, scale=0), nullable=False),
     sa.Column('ended_at', sa.Integer(), nullable=True),
-    sa.PrimaryKeyConstraint('era')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_data_era_price_request_ended_at'), 'data_era_price_request', ['ended_at'], unique=False)
+
+    op.create_table('data_validator_audit_from_chain',
+                    sa.Column('id', sa.Integer(), nullable=False),
+                    sa.Column('validator', sa.String(length=100), nullable=False),
+                    sa.Column('ares_authority', sa.String(length=100), nullable=False),
+                    sa.Column('block_number', sa.Integer(), nullable=False),
+                    sa.Column('status', sa.String(length=20), nullable=False),
+                    sa.PrimaryKeyConstraint('id'),
+                    sa.UniqueConstraint('validator', 'ares_authority', name='unqiue_validator_ares_authority')
+                    )
 
     op.create_table('data_estimates_participants',
                     sa.Column('block_id', sa.Integer(), nullable=False),

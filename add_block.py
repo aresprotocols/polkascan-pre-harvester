@@ -23,11 +23,9 @@ if __name__ == '__main__':
         type_registry_file=TYPE_REGISTRY_FILE
     )
 
-    # ('156617', '97308', '97277', '97277', '119935')
+    # ('76743', '83942', '91142', '115127')
     substrate = harvester.substrate
-    block_hash = substrate.get_block_hash(97308)
-    # block_hash = substrate.get_block_hash(161481)
-    # block_hash = substrate.get_block_hash(157600)
+    block_hash = substrate.get_block_hash(83942)
     substrate.init_runtime(block_hash=block_hash)
     block = harvester.add_block(block_hash=block_hash)
 
