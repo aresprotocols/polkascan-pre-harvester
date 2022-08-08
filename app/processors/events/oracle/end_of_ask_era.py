@@ -16,6 +16,13 @@ class EndOfAskEraEventProcessor(EventProcessor):
             era_price_request.ended_at = self.block.id
             era_price_request.save(db_session)
         else:
-            # TODO fix
-            print("price_request not exist skip this event")
+            era_price_request = EraPriceRequest(
+                era=era,
+                total_eras=0,
+                era_total_requests=0,
+                era_total_points=attributes[2]['value'],
+                era_total_fee=attributes[1]['value'],
+                ended_at=self.block.id
+            )
+            era_price_request.save(db_session)
 
