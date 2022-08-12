@@ -15,7 +15,7 @@ class EndOfAskEraEventProcessor(EventProcessor):
             era_price_request.era_total_points = attributes[2]['value']
             era_price_request.ended_at = self.block.id
             era_price_request.save(db_session)
-        else:
+        elif attributes[2]['value'] > 0:
             era_price_request = EraPriceRequest(
                 era=era,
                 total_eras=0,
