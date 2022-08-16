@@ -9,6 +9,7 @@ class IdentityJudgementGivenEventProcessor(EventProcessor):
 
     def accumulation_hook(self, db_session):
 
+
         # Check event requirements
         if len(self.event.attributes) == 2 and \
                 self.event.attributes[0]['type'] == 'T::AccountId' and \
@@ -25,7 +26,8 @@ class IdentityJudgementGivenEventProcessor(EventProcessor):
 
             for param in self.extrinsic.params:
                 if param.get('name') == 'judgement':
-                    identity_audit.data = {'judgement': list(param.get('value').keys())[0]}
+                    judgement_val = param.get('value')
+                    identity_audit.data = {'judgement': judgement_val}
 
             identity_audit.save(db_session)
 
