@@ -13,13 +13,14 @@ from app.settings import ACCOUNT_AUDIT_TYPE_REAPED, ACCOUNT_AUDIT_TYPE_NEW, SUBS
 class AccountBlockProcessor(BlockProcessor):
 
     def accumulation_hook(self, db_session):
+        # print('### KAMI-DEBUG:accumulation_hook....')
         self.block.count_accounts_new += len(set(self.block._accounts_new))
         self.block.count_accounts_reaped += len(set(self.block._accounts_reaped))
 
         self.block.count_accounts = self.block.count_accounts_new - self.block.count_accounts_reaped
 
     def sequencing_hook(self, db_session, parent_block_data, parent_sequenced_block_data):
-
+        # print('### KAMI-DEBUG:sequencing_hook....')
         for account_audit in AccountAudit.query(db_session).filter_by(block_id=self.block.id).order_by('event_idx'):
             try:
                 account: Account = Account.query(db_session).filter_by(id=account_audit.account_id).one()

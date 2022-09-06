@@ -1,4 +1,7 @@
-#! /usr/bin/env sh
+#! export $(cat .env | xargs)
+
+# load ENV variables.
+export $(grep -v '^#' for-runfiles.private.env | xargs)
 
 if [ -z $ENVIRONMENT ] || [ "$ENVIRONMENT" = "dev" ]; then
     ENVIRONMENT="dev"
