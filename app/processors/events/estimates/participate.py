@@ -3,6 +3,7 @@ from app.processors.base import EventProcessor
 from scalecodec.types import ss58_encode
 from app.settings import SUBSTRATE_ADDRESS_TYPE
 
+
 class ParticipateEstimates(EventProcessor):
     module_id = 'Estimates'
     event_id = 'ParticipateEstimates'
@@ -18,21 +19,21 @@ class ParticipateEstimates(EventProcessor):
             ss58_address = ss58_encode(participant, SUBSTRATE_ADDRESS_TYPE)
             price = self.event.attributes[2]['value']['estimates']
             option_index = self.event.attributes[2]['value']['range_index']
+            deposit = None
 
         if len(self.event.attributes) == 4:
             estimate_type = 'price'
             if price is None:
                 estimate_type = 'range'
         elif len(self.event.attributes) == 5:
-            # symbol = self.event.attributes[0]['value']
-            # estimate_id = self.event.attributes[1]['value']
-            # participant = self.event.attributes[3]['value'].replace('0x', '')
-            # price = self.event.attributes[2]['value']['estimates']
-            # option_index = self.event.attributes[2]['value']['range_index']
             estimate_type = 'price'
-            # print('estimate_type', self.event.attributes[4]['value'])
             if self.event.attributes[4]['value'] == 'RANGE':
                 estimate_type = 'range'
+        elif len(self.event.attributes) == 6:
+            estimate_type = 'price'
+            if self.event.attributes[4]['value'] == 'RANGE':
+                estimate_type = 'range'
+            deposit = self.event.attributes[5]['value']
         else:
             raise ValueError('Event doensn\'t meet requirements')
 
@@ -45,7 +46,8 @@ class ParticipateEstimates(EventProcessor):
             ss58_address=ss58_address,
             created_at=self.block.datetime,
             price=price,
-            block_id=self.event.block_id
+            block_id=self.event.block_id,
+            deposit=deposit,
         )
 
         participant.save(db_session)

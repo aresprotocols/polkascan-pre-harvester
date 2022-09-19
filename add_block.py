@@ -32,7 +32,7 @@ if __name__ == '__main__':
     # block_hash = substrate.get_block_hash(724954)
     # block_hash = substrate.get_block_hash(724304)
     # block_hash = substrate.get_block_hash(682743)
-    block_hash = substrate.get_block_hash(771399)
+    block_hash = substrate.get_block_hash(772113)
 
 
     substrate.init_runtime(block_hash=block_hash)

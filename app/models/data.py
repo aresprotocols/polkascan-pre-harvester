@@ -848,6 +848,7 @@ class EstimatesParticipants(BaseModel):
     ss58_address = sa.Column(sa.String(48), index=True)
     created_at = sa.Column(sa.DateTime(timezone=True), nullable=True)  # self.block.datetime
     price = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True)
+    deposit = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True)
     option_index = sa.Column(sa.Integer(), nullable=True)
     block_id = sa.Column(sa.Integer(), nullable=False)
 

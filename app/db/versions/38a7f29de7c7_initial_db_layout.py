@@ -746,6 +746,7 @@ def upgrade():
                     sa.Column('ss58_address', sa.String(length=48), nullable=True),
                     sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
                     sa.Column('price', sa.Numeric(precision=65, scale=0), nullable=True),
+                    sa.Column('deposit', sa.Numeric(precision=65, scale=0), nullable=True),
                     sa.Column('option_index', sa.Integer(), nullable=True),
                     # sa.Column('created_at', sa.Integer(), nullable=False),
                     sa.PrimaryKeyConstraint('symbol', 'estimate_id', 'participant')
