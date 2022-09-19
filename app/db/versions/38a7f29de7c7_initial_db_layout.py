@@ -742,6 +742,9 @@ def upgrade():
                     sa.Column('estimate_id', sa.Integer(), nullable=False),
                     sa.Column('estimate_type', sa.String(length=30), nullable=False),
                     sa.Column('participant', sa.String(length=64), nullable=False),
+                    # ss58_address=sa.Column(sa.String(48), index=True)
+                    sa.Column('ss58_address', sa.String(length=48), nullable=True),
+                    sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
                     sa.Column('price', sa.Numeric(precision=65, scale=0), nullable=True),
                     sa.Column('option_index', sa.Integer(), nullable=True),
                     # sa.Column('created_at', sa.Integer(), nullable=False),
@@ -751,6 +754,29 @@ def upgrade():
                     ['estimate_type'], unique=False)
     op.create_index(op.f('ix_data_estimates_participants_block_id'), 'data_estimates_participants',
                     ['block_id'], unique=False)
+
+    # id, ss58_addr, public_key, reward, symbol, estimate_id, estimate_type
+    op.create_table('data_estimates_winner',
+                    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+                    sa.Column('block_id', sa.Integer(), nullable=False),
+                    sa.Column('symbol', sa.String(length=30), nullable=False),
+                    sa.Column('estimate_id', sa.Integer(), nullable=False),
+                    sa.Column('estimate_type', sa.String(length=30), nullable=False),
+                    sa.Column('ss58_address', sa.String(length=48), nullable=False),
+                    sa.Column('public_key', sa.String(length=64), nullable=False),
+                    sa.Column('reward', sa.Numeric(precision=65, scale=0), nullable=False),
+                    sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
+                    sa.PrimaryKeyConstraint('id'),
+                    )
+    op.create_index(op.f('ix_b_s_e_e_s'), 'data_estimates_winner',
+                    ['block_id', 'symbol', 'estimate_id', 'estimate_type', 'ss58_address'], unique=True)
+    op.create_index(op.f('ix_created_at'), 'data_estimates_winner',
+                    ['created_at'], unique=False)
+    op.create_index(op.f('ix_ss58_address'), 'data_estimates_winner',
+                    ['ss58_address'], unique=False)
+    op.create_index(op.f('ix_public_key'), 'data_estimates_winner',
+                    ['public_key'], unique=False)
+
     # ### end Alembic commands ###
 
 

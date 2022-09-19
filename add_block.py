@@ -28,7 +28,13 @@ if __name__ == '__main__':
     # block_hash = substrate.get_block_hash(40486) # 40486 是 NewPurchasedRequest 调用区块
     # block_hash = substrate.get_block_hash(571618)  # 40779 是 EndOfAskEra 调用的区块
     # block_hash = substrate.get_block_hash(571611)
-    block_hash = substrate.get_block_hash(714888)
+    # block_hash = substrate.get_block_hash(714888)
+    # block_hash = substrate.get_block_hash(724954)
+    # block_hash = substrate.get_block_hash(724304)
+    # block_hash = substrate.get_block_hash(682743)
+    block_hash = substrate.get_block_hash(771399)
+
+
     substrate.init_runtime(block_hash=block_hash)
     block = harvester.add_block(block_hash=block_hash)
     harvester.sequence_block(block)
