@@ -754,6 +754,8 @@ def upgrade():
                     ['estimate_type'], unique=False)
     op.create_index(op.f('ix_data_estimates_participants_block_id'), 'data_estimates_participants',
                     ['block_id'], unique=False)
+    op.create_index(op.f('ix_ss58_address'), 'data_estimates_participants',
+                    ['ss58_address'], unique=False)
 
     # id, ss58_addr, public_key, reward, symbol, estimate_id, estimate_type
     op.create_table('data_estimates_winner',
