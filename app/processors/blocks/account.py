@@ -13,14 +13,14 @@ from app.settings import ACCOUNT_AUDIT_TYPE_REAPED, ACCOUNT_AUDIT_TYPE_NEW, SUBS
 class AccountBlockProcessor(BlockProcessor):
 
     def accumulation_hook(self, db_session):
-        # print('### KAMI-DEBUG:accumulation_hook....')
+        print('### KAMI-DEBUG:accumulation_hook....')
         self.block.count_accounts_new += len(set(self.block._accounts_new))
         self.block.count_accounts_reaped += len(set(self.block._accounts_reaped))
 
         self.block.count_accounts = self.block.count_accounts_new - self.block.count_accounts_reaped
 
     def sequencing_hook(self, db_session, parent_block_data, parent_sequenced_block_data):
-        # print('### KAMI-DEBUG:sequencing_hook....')
+        print('### KAMI-DEBUG:sequencing_hook....')
         for account_audit in AccountAudit.query(db_session).filter_by(block_id=self.block.id).order_by('event_idx'):
             try:
                 account: Account = Account.query(db_session).filter_by(id=account_audit.account_id).one()
@@ -80,10 +80,12 @@ class AccountBlockProcessor(BlockProcessor):
         # accounts that have activity (lookup in account_index) in current block
         # TODO implement calls
 
+        print("########################################### BEGIN Check SearchIndex")
         for search_index in db_session.query(SearchIndex.account_id).filter(
                 SearchIndex.block_id == self.block.id,
                 SearchIndex.account_id.notin_(db_session.query(Account.id))
         ).distinct():
+            print("search_index.account_id", search_index.account_id)
             account = Account(
                 id=search_index.account_id,
                 address=ss58_encode(search_index.account_id, SUBSTRATE_ADDRESS_TYPE),
@@ -93,6 +95,8 @@ class AccountBlockProcessor(BlockProcessor):
             )
             self.update_account_info(account)
             account.save(db_session)
+
+        print("########################################### END Check SearchIndex")
 
     def update_account_info(self, account: Account):
         try:
