@@ -80,7 +80,7 @@ class AccountBlockProcessor(BlockProcessor):
         # accounts that have activity (lookup in account_index) in current block
         # TODO implement calls
 
-        print("########################################### BEGIN Check SearchIndex")
+        print("########################################### BEGIN Check SearchIndex", self.block.id)
         for search_index in db_session.query(SearchIndex.account_id).filter(
                 SearchIndex.block_id == self.block.id,
                 SearchIndex.account_id.notin_(db_session.query(Account.id))

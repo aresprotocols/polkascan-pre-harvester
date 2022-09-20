@@ -57,12 +57,14 @@ class NewSessionEventProcessor(EventProcessor):
 
             # Retrieve validator preferences for stash account
             try:
-                validator_prefs = utils.query_storage(pallet_name="Staking", storage_name="ErasValidatorPrefs",
+                staking_eras_validator_prefs = utils.query_storage(pallet_name="Staking", storage_name="ErasValidatorPrefs",
                                                       substrate=substrate,
                                                       block_hash=self.block.hash,
-                                                      params=[current_era, validator_account]).value
+                                                      params=[current_era, validator_account])
+                # print("%%%%%%%%% staking_eras_validator_prefs = ", staking_eras_validator_prefs, [current_era, validator_account])
+                validator_prefs = staking_eras_validator_prefs.value
             except Exception as e:
-                print("query validator_prefs storage error:{}".format(e))
+                print("query validator_prefs storage error:{}, but not very important".format(e))
                 validator_prefs = None
 
             if not validator_prefs:

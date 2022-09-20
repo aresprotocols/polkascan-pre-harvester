@@ -40,6 +40,7 @@ CELERY_BROKER = os.environ.get('CELERY_BROKER')
 CELERY_BACKEND = os.environ.get('CELERY_BACKEND')
 BLOCKS_LIMIT = 100
 
+
 app = celery.Celery('tasks', broker=CELERY_BROKER, backend=CELERY_BACKEND)
 
 app.conf.beat_schedule = {
@@ -116,6 +117,7 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
     try:
         for nr in range(0, BLOCKS_LIMIT): # LIMIT = 100
             if not block or block.id > 0:
+
                 # Process block
                 block = harvester.add_block(block_hash)
 
@@ -145,7 +147,7 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
         print('. KAMI DEBUG - Skipped duplicate {} '.format(block_hash))
         # print(', '.join("%s: %s" % item for item in attrs.items()))
     except Exception as exc:
-        print('! ERROR adding {}'.format(block_hash))
+        print('! ERROR adding {}, {}'.format(block_hash, exc.__traceback__))
         raise HarvesterCouldNotAddBlock(block_hash) from exc
 
     return {
@@ -172,10 +174,12 @@ def start_sequencer(self):
 
         harvester = self.harvester
         try:
+            print("KAMI-DEBUG start_sequencer task will run harvester.start_sequencer()")
             result = harvester.start_sequencer()
         except Exception as e:
             traceback.print_exception(type(e), e, e.__traceback__)
             self.session.rollback()
+            print("KAMI-DEBUG start_sequencer task had an error.")
             result = {'result': str(e)}
 
         sequencer_task.value = None
@@ -206,6 +210,8 @@ def rebuilding_search_index(self, search_index_id=None, truncate=False):
 
 @app.task(base=BaseTask, bind=True)
 def start_harvester(self, check_gaps=True):
+
+
     substrate = self.harvester.substrate
 
     block_sets = []
