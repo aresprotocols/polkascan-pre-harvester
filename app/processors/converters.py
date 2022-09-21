@@ -899,21 +899,25 @@ class PolkascanHarvesterService(BaseService):
                 block_range = Block.query(self.db_session).order_by('id')[block_nr:block_nr + chunk_size]
                 for block in block_range:
                     if parent_block:
+                        print('Kami-DEBUG block.id={}, parent_block.id={}'.format(block.id, parent_block.id))
                         if block.id != parent_block.id + 1:
 
                             check_block_hash = self.substrate.get_block_hash(integrity_head.value)
+                            print('Kami-DEBUG integrity_checks: check_block_hash ={}, integrity_head.value={}'.format(check_block_hash, integrity_head.value))
                             # Save integrity head if block hash of parent matches with hash in node
                             if parent_block.hash == check_block_hash:
                                 integrity_head.save(self.db_session)
                                 self.db_session.commit()
 
                             try:
-                                print('Kami Try Add {} '.format(parent_block.id + 1))
+                                print('Kami Try Add {}'.format(parent_block.id))
                                 for item in SymbolSnapshot.query(self.db_session).filter_by(block_id=parent_block.id + 1):
                                     print('Kami Delete SymbolSnapshot. ')
                                     self.db_session.delete(item)
                                 self.add_block(check_block_hash)
                                 self.db_session.commit()
+                                parent_block = block
+
                             except Exception as e:
                                 error_msg = 'Kami Block #{} is missing.. stopping check, {}, #{}, #{}'.format(parent_block.id + 1, check_block_hash, e.__class__, e.__context__)
                                 print(error_msg)
