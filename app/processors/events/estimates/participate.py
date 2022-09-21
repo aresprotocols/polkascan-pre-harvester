@@ -40,8 +40,8 @@ class ParticipateEstimates(EventProcessor):
 
         # Will delete before insert first that is use to fix cannot be inserted repeatedly.
         # Symbol-ID-participant
-        for item in EstimatesParticipants.query(self.db_session).filter_by(symbol=symbol, estimate_id=estimate_id, participant=participant):
-            self.db_session.delete(item)
+        for item in EstimatesParticipants.query(db_session).filter_by(symbol=symbol, estimate_id=estimate_id, participant=participant):
+            db_session.delete(item)
 
         participant = EstimatesParticipants(
             symbol=symbol,
