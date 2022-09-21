@@ -20,6 +20,7 @@
 import json
 import logging
 import math
+import traceback
 
 from scalecodec.base import ScaleBytes, RuntimeConfiguration
 from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
@@ -909,6 +910,7 @@ class PolkascanHarvesterService(BaseService):
                                 integrity_head.save(self.db_session)
                                 self.db_session.commit()
 
+
                             try:
                                 print('Kami Try Add {}'.format(parent_block.id))
                                 for item in SymbolSnapshot.query(self.db_session).filter_by(block_id=parent_block.id + 1):
@@ -923,9 +925,9 @@ class PolkascanHarvesterService(BaseService):
                                 print(error_msg)
                                 raise BlockIntegrityError(error_msg)
 
-                            # raise BlockIntegrityError(
-                            #     'Kami Block #{} is missing.. stopping check '.format(parent_block.id + 1)
-                            # )
+                            raise BlockIntegrityError(
+                                'Kami Block #{} is missing.. stopping check '.format(parent_block.id + 1)
+                            )
 
                         elif block.parent_hash != parent_block.hash:
 
@@ -972,77 +974,82 @@ class PolkascanHarvesterService(BaseService):
 
     def start_sequencer(self):
         print("RUN X start_sequencer start")
-        self.integrity_checks()
-        self.db_session.commit()
-
-        block_nr = None
-
-        integrity_head = Status.get_status(self.db_session, 'INTEGRITY_HEAD')
-
-        if not integrity_head.value:
-            integrity_head.value = 0
-
-        # 3. Check sequence head
-        sequencer_head = self.db_session.query(func.max(BlockTotal.id)).one()[0]
-
-        if sequencer_head is None:
-            sequencer_head = -1
-
-        # Start sequencing process
-
-        sequencer_parent_block = BlockTotal.query(self.db_session).filter_by(id=sequencer_head).first()
-        parent_block = Block.query(self.db_session).filter_by(id=sequencer_head).first()
-
-        print(f"Kami: sequencer range:{sequencer_head+1} to {int(integrity_head.value) + 1}")
-        for block_nr in range(sequencer_head + 1, int(integrity_head.value) + 1):
-
-            if block_nr == 0:
-                # No block ever sequenced, check if chain is at genesis state
-                assert (not sequencer_parent_block)
-
-                block = Block.query(self.db_session).order_by('id').first()
-
-                if not block:
-                    self.db_session.commit()
-                    return {'error': 'Chain not at genesis'}
-
-                if block.id == 1:
-                    # Add genesis block
-                    block = self.add_block(block.parent_hash)
-
-                if block.id != 0:
-                    self.db_session.commit()
-                    return {'error': 'Chain not at genesis'}
-
-                self.process_genesis(block)
-
-                sequencer_parent_block_data = None
-                parent_block_data = None
-            else:
-                block_id = sequencer_parent_block.id + 1
-
-                assert (block_id == block_nr)
-
-                block = Block.query(self.db_session).get(block_nr)
-
-                if not block:
-                    self.db_session.commit()
-                    return {'result': 'Finished at #{}'.format(sequencer_parent_block.id)}
-
-                sequencer_parent_block_data = sequencer_parent_block.asdict()
-                parent_block_data = parent_block.asdict()
-
-            print(f"sequence_block {block.id}")
-            sequenced_block = self.sequence_block(block, parent_block_data, sequencer_parent_block_data)
+        try:
+            self.integrity_checks()
             self.db_session.commit()
 
-            parent_block = block
-            sequencer_parent_block = sequenced_block
+            block_nr = None
 
-        if block_nr is None:
-            return {'result': 'Finished at #{}'.format(block_nr)}
-        else:
-            return {'result': 'Nothing to sequence'}
+            integrity_head = Status.get_status(self.db_session, 'INTEGRITY_HEAD')
+
+            if not integrity_head.value:
+                integrity_head.value = 0
+
+            # 3. Check sequence head
+            sequencer_head = self.db_session.query(func.max(BlockTotal.id)).one()[0]
+
+            if sequencer_head is None:
+                sequencer_head = -1
+
+            # Start sequencing process
+
+            sequencer_parent_block = BlockTotal.query(self.db_session).filter_by(id=sequencer_head).first()
+            parent_block = Block.query(self.db_session).filter_by(id=sequencer_head).first()
+
+            print(f"Kami: sequencer range:{sequencer_head + 1} to {int(integrity_head.value) + 1}")
+            for block_nr in range(sequencer_head + 1, int(integrity_head.value) + 1):
+
+                if block_nr == 0:
+                    # No block ever sequenced, check if chain is at genesis state
+                    assert (not sequencer_parent_block)
+
+                    block = Block.query(self.db_session).order_by('id').first()
+
+                    if not block:
+                        self.db_session.commit()
+                        return {'error': 'Chain not at genesis'}
+
+                    if block.id == 1:
+                        # Add genesis block
+                        block = self.add_block(block.parent_hash)
+
+                    if block.id != 0:
+                        self.db_session.commit()
+                        return {'error': 'Chain not at genesis'}
+
+                    self.process_genesis(block)
+
+                    sequencer_parent_block_data = None
+                    parent_block_data = None
+                else:
+                    block_id = sequencer_parent_block.id + 1
+
+                    assert (block_id == block_nr)
+
+                    block = Block.query(self.db_session).get(block_nr)
+
+                    if not block:
+                        self.db_session.commit()
+                        return {'result': 'Finished at #{}'.format(sequencer_parent_block.id)}
+
+                    sequencer_parent_block_data = sequencer_parent_block.asdict()
+                    parent_block_data = parent_block.asdict()
+
+                print(f"sequence_block {block.id}")
+                sequenced_block = self.sequence_block(block, parent_block_data, sequencer_parent_block_data)
+                self.db_session.commit()
+
+                parent_block = block
+                sequencer_parent_block = sequenced_block
+
+            if block_nr is None:
+                return {'result': 'Finished at #{}'.format(block_nr)}
+            else:
+                return {'result': 'Nothing to sequence'}
+        except Exception as e:
+            return {'result': 'start_sequencer had an error {}'.format(traceback.format_exception(type(e), e, e.__traceback__))}
+
+
 
     def process_reorg_block(self, block):
 
