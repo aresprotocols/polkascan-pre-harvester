@@ -915,10 +915,13 @@ class PolkascanHarvesterService(BaseService):
                                 self.add_block(check_block_hash)
                                 self.db_session.commit()
                             except Exception as e:
-                                print('KAMI TRY ADD ERR {}, #{}, #{}'.format(check_block_hash, e.__class__, e.__context__))
+                                error_msg = 'Kami Block #{} is missing.. stopping check, {}, #{}, #{}'.format(parent_block.id + 1, check_block_hash, e.__class__, e.__context__)
+                                print(error_msg)
+                                raise BlockIntegrityError(error_msg)
 
-                            raise BlockIntegrityError(
-                                'Kami Block #{} is missing.. stopping check '.format(parent_block.id + 1))
+                            # raise BlockIntegrityError(
+                            #     'Kami Block #{} is missing.. stopping check '.format(parent_block.id + 1)
+                            # )
 
                         elif block.parent_hash != parent_block.hash:
 

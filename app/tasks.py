@@ -211,7 +211,6 @@ def rebuilding_search_index(self, search_index_id=None, truncate=False):
 @app.task(base=BaseTask, bind=True)
 def start_harvester(self, check_gaps=True):
 
-
     substrate = self.harvester.substrate
 
     block_sets = []
