@@ -749,7 +749,7 @@ def upgrade():
                     sa.Column('deposit', sa.Numeric(precision=65, scale=0), nullable=True),
                     sa.Column('option_index', sa.Integer(), nullable=True),
                     # sa.Column('created_at', sa.Integer(), nullable=False),
-                    sa.PrimaryKeyConstraint('symbol', 'estimate_id', 'participant')
+                    sa.PrimaryKeyConstraint('symbol', 'estimate_id', 'participant', 'estimate_type')
                     )
     op.create_index(op.f('ix_data_estimates_participants_estimate_type'), 'data_estimates_participants',
                     ['estimate_type'], unique=False)

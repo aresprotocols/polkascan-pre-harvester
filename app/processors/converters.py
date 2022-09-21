@@ -819,6 +819,7 @@ class PolkascanHarvesterService(BaseService):
         # Process block processors
         for processor_class in ProcessorRegistry().get_block_processors():
             block_processor = processor_class(block, sequenced_block, substrate=self.substrate)
+            # Goto block sequencing_hook
             block_processor.sequencing_hook(
                 self.db_session,
                 parent_block_data,
@@ -1035,7 +1036,7 @@ class PolkascanHarvesterService(BaseService):
                     sequencer_parent_block_data = sequencer_parent_block.asdict()
                     parent_block_data = parent_block.asdict()
 
-                print(f"sequence_block {block.id}")
+                print(f"sequence_block {block.id} For data_block_total.")
                 sequenced_block = self.sequence_block(block, parent_block_data, sequencer_parent_block_data)
                 self.db_session.commit()
 
