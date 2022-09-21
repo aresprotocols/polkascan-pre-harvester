@@ -910,15 +910,15 @@ class PolkascanHarvesterService(BaseService):
                                 integrity_head.save(self.db_session)
                                 self.db_session.commit()
 
-
                             try:
-                                print('Kami Try Add {}'.format(parent_block.id))
+                                re_add_hash = self.substrate.get_block_hash(parent_block.id+1)
+                                print('Kami Try Add={} AND hash={}'.format(parent_block.id+1, re_add_hash))
                                 for item in SymbolSnapshot.query(self.db_session).filter_by(block_id=parent_block.id + 1):
                                     print('Kami Delete SymbolSnapshot. ')
                                     self.db_session.delete(item)
-                                self.add_block(check_block_hash)
+                                self.add_block(re_add_hash)
                                 self.db_session.commit()
-                                parent_block = block
+                                # parent_block = block
 
                             except Exception as e:
                                 error_msg = 'Kami Block #{} is missing.. stopping check, {}, #{}, #{}'.format(parent_block.id + 1, check_block_hash, e.__class__, e.__context__)
