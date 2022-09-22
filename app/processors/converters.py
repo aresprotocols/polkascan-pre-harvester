@@ -919,7 +919,10 @@ class PolkascanHarvesterService(BaseService):
                                     self.db_session.delete(item)
                                 self.add_block(re_add_hash)
                                 self.db_session.commit()
-                                # parent_block = block
+
+                                integrity_head.value = parent_block.id - 1
+                                integrity_head.save(self.db_session)
+                                self.db_session.commit()
 
                             except Exception as e:
                                 error_msg = 'Kami Block #{} is missing.. stopping check, {}, #{}, #{}'.format(parent_block.id + 1, check_block_hash, e.__class__, e.__context__)
