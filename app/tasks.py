@@ -159,6 +159,7 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
 
 @app.task(base=BaseTask, bind=True)
 def start_sequencer(self):
+    print("RUN A: start_sequencer")
     sequencer_task = Status.get_status(self.session, 'SEQUENCER_TASK_ID')
 
     if sequencer_task.value:
