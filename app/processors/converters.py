@@ -21,6 +21,7 @@ import json
 import logging
 import math
 import traceback
+from datetime import datetime
 
 from scalecodec.base import ScaleBytes, RuntimeConfiguration
 from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
@@ -797,6 +798,15 @@ class PolkascanHarvesterService(BaseService):
 
         # Delete block
         self.db_session.delete(block)
+
+    def debug_task(self):
+        sequencer_task = Status.get_status(self.db_session, 'SEQUENCER_TASK_ID')
+        print(sequencer_task.value, sequencer_task.last_modified)
+        old_time_str = '2022-09-23 09:49:58'
+        # old_time = datetime.strptime(old_time_str, "%Y-%m-%d %H:%M:%S")
+        # status_time = datetime.strptime(sequencer_task.last_modified, "%Y-%m-%d %H:%M:%S")
+        print(Status.diff_second(old_time_str))
+
 
     def sequence_block(self, block: Block, parent_block_data=None, parent_sequenced_block_data=None):
         print('RUN 0 Check BlockTotal')

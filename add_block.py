@@ -6,6 +6,8 @@ from app.models.data import BlockTotal
 from app.processors.converters import PolkascanHarvesterService
 from app.settings import DB_CONNECTION, DEBUG, TYPE_REGISTRY, TYPE_REGISTRY_FILE, SUBSTRATE_RPC_URL
 
+
+
 if __name__ == '__main__':
 
     print("DB_CONNECTION=%s, DEBUG=%s, TYPE_REGISTRY=%s, TYPE_REGISTRY_FILE=%s" % (DB_CONNECTION, DEBUG, TYPE_REGISTRY, TYPE_REGISTRY_FILE))
@@ -30,17 +32,17 @@ if __name__ == '__main__':
     # block_hash = substrate.get_block_hash(571611)
     # block_hash = substrate.get_block_hash(714888)
     # block_hash = substrate.get_block_hash(724954)
-    block_hash = substrate.get_block_hash(724304)
+    # block_hash = substrate.get_block_hash(724304)
     # block_hash = substrate.get_block_hash(682743)
     # block_hash = substrate.get_block_hash(788001)
     # block_hash = substrate.get_block_hash(772113)
     # block_hash = substrate.get_block_hash(784120)
-
-
+    block_hash = substrate.get_block_hash(784120)
 
     substrate.init_runtime(block_hash=block_hash)
-    block = harvester.add_block(block_hash=block_hash)
-    harvester.sequence_block(block)
+    # block = harvester.add_block(block_hash=block_hash)
+    # harvester.sequence_block(block)
+    harvester.debug_task()
 
     session.commit()
     session.close()

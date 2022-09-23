@@ -26,6 +26,7 @@ from celery.result import AsyncResult
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session
+from datetime import datetime
 
 from app import settings
 from app.models.data import Block, Account, AccountInfoSnapshot, SearchIndex, SymbolSnapshot, Extrinsic, \
@@ -166,6 +167,11 @@ def start_sequencer(self):
         task_result = AsyncResult(sequencer_task.value)
         if not task_result or task_result.ready():
             sequencer_task.value = None
+            sequencer_task.save(self.session)
+        if sequencer_task.last_modified is None or Status.diff_second(sequencer_task.last_modified) > 60:
+            # Force start new one
+            sequencer_task.value = None
+            sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sequencer_task.save(self.session)
 
     if sequencer_task.value is None:

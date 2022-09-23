@@ -19,6 +19,7 @@
 #  harvester.py
 #
 from app.models.base import BaseModel
+from datetime import datetime
 import sqlalchemy as sa
 
 
@@ -35,10 +36,18 @@ class Status(BaseModel):
 
         if not model:
             return Status(
-                key=key
+                key=key,
+                last_modified=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             )
 
         return model
+
+    @classmethod
+    def diff_second(cls, old_time_str):
+        old_time = datetime.strptime(old_time_str, "%Y-%m-%d %H:%M:%S")
+        current_time = datetime.now()
+        return (current_time - old_time).seconds
+
 
 
 class Setting(BaseModel):
