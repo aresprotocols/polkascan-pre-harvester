@@ -265,6 +265,7 @@ class StartSequenceBlockResource(BaseResource):
         if sequencer_task.value is None:
             # 3. IF NOT RUNNING: set task id is status table
             sequencer_task.value = "123"
+            sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sequencer_task.save(self.session)
 
             harvester = PolkascanHarvesterService(

@@ -893,8 +893,10 @@ class PolkascanHarvesterService(BaseService):
                 raise BlockIntegrityError('Chain not at genesis')
 
             integrity_head.value = 0
+            integrity_head.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         else:
             integrity_head.value = int(integrity_head.value)
+            integrity_head.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         start_block_id = max(integrity_head.value - 1, 0)
         end_block_id = finalized_block_number
