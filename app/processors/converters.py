@@ -806,7 +806,8 @@ class PolkascanHarvesterService(BaseService):
         # old_time = datetime.strptime(old_time_str, "%Y-%m-%d %H:%M:%S")
         # status_time = datetime.strptime(sequencer_task.last_modified, "%Y-%m-%d %H:%M:%S")
         print(Status.diff_second(old_time_str))
-        sequencer_task.value = '123'
+        sequencer_task.value = '456'
+        sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         sequencer_task.save(self.db_session)
 
     def sequence_block(self, block: Block, parent_block_data=None, parent_sequenced_block_data=None):

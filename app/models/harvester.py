@@ -18,7 +18,7 @@
 #
 #  harvester.py
 #
-from app.models.base import BaseModel
+from app.models.base import BaseModel, BaseModelObj
 from datetime import datetime
 import sqlalchemy as sa
 
@@ -47,12 +47,16 @@ class Status(BaseModel):
         old_time = datetime.strptime(old_time_str, "%Y-%m-%d %H:%M:%S")
         current_time = datetime.now()
         return (current_time - old_time).seconds
-    #
+
     # def save(self, session):
     #     self.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    #     # BaseModel.save(self, session)
-    #     super().save(session)
     #     # session.add(self)
+    #     # session.flush()
+    #     # BaseModel.save(self, session)
+    #     # super().save(session)
+    #     # session.add(self)
+    #     # BaseModelObj.save()
+    #     BaseModelObj.save(self, session)
     #     # session.flush()
 
 
