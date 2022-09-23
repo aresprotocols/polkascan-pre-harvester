@@ -233,7 +233,7 @@ class PolkascanHarvesterService(BaseService):
     #  before process_metadata get_block had called init_runtime
     ###
     def process_metadata(self, spec_version, block_hash):
-        print('Kami Debug spec_version={}, block_hash={},'.format(spec_version,block_hash))
+        print('Kami Debug spec_version={}, block_hash={},'.format(spec_version, block_hash))
         # Check if metadata already stored
         runtime = Runtime.query(self.db_session).get(spec_version)
 
@@ -806,7 +806,8 @@ class PolkascanHarvesterService(BaseService):
         # old_time = datetime.strptime(old_time_str, "%Y-%m-%d %H:%M:%S")
         # status_time = datetime.strptime(sequencer_task.last_modified, "%Y-%m-%d %H:%M:%S")
         print(Status.diff_second(old_time_str))
-
+        sequencer_task.value = '123'
+        sequencer_task.save(self.db_session)
 
     def sequence_block(self, block: Block, parent_block_data=None, parent_sequenced_block_data=None):
         print('RUN 0 Check BlockTotal')
@@ -917,16 +918,18 @@ class PolkascanHarvesterService(BaseService):
                         if block.id != parent_block.id + 1:
 
                             check_block_hash = self.substrate.get_block_hash(integrity_head.value)
-                            print('Kami-DEBUG integrity_checks: check_block_hash ={}, integrity_head.value={}'.format(check_block_hash, integrity_head.value))
+                            print('Kami-DEBUG integrity_checks: check_block_hash ={}, integrity_head.value={}'.format(
+                                check_block_hash, integrity_head.value))
                             # Save integrity head if block hash of parent matches with hash in node
                             if parent_block.hash == check_block_hash:
                                 integrity_head.save(self.db_session)
                                 self.db_session.commit()
 
                             try:
-                                re_add_hash = self.substrate.get_block_hash(parent_block.id+1)
-                                print('Kami Try Add={} AND hash={}'.format(parent_block.id+1, re_add_hash))
-                                for item in SymbolSnapshot.query(self.db_session).filter_by(block_id=parent_block.id + 1):
+                                re_add_hash = self.substrate.get_block_hash(parent_block.id + 1)
+                                print('Kami Try Add={} AND hash={}'.format(parent_block.id + 1, re_add_hash))
+                                for item in SymbolSnapshot.query(self.db_session).filter_by(
+                                        block_id=parent_block.id + 1):
                                     print('Kami Delete SymbolSnapshot. ')
                                     self.db_session.delete(item)
                                 self.add_block(re_add_hash)
@@ -937,7 +940,8 @@ class PolkascanHarvesterService(BaseService):
                                 self.db_session.commit()
 
                             except Exception as e:
-                                error_msg = 'Kami Block #{} is missing.. stopping check, {}, #{}, #{}'.format(parent_block.id + 1, check_block_hash, e.__class__, e.__context__)
+                                error_msg = 'Kami Block #{} is missing.. stopping check, {}, #{}, #{}'.format(
+                                    parent_block.id + 1, check_block_hash, e.__class__, e.__context__)
                                 print(error_msg)
                                 raise BlockIntegrityError(error_msg)
 
@@ -968,7 +972,8 @@ class PolkascanHarvesterService(BaseService):
                             print('Kami parent_hash != hash {}!={}'.format(block.parent_hash, parent_block.hash))
 
                             raise BlockIntegrityError(
-                                'ERROR: Block #{} failed integrity checks, Re-adding #{}.. '.format(parent_block.id, block.id))
+                                'ERROR: Block #{} failed integrity checks, Re-adding #{}.. '.format(parent_block.id,
+                                                                                                    block.id))
                         else:
                             integrity_head.value = block.id
 
@@ -1063,9 +1068,8 @@ class PolkascanHarvesterService(BaseService):
             else:
                 return {'result': 'Nothing to sequence'}
         except Exception as e:
-            return {'result': 'start_sequencer had an error {}'.format(traceback.format_exception(type(e), e, e.__traceback__))}
-
-
+            return {'result': 'start_sequencer had an error {}'.format(
+                traceback.format_exception(type(e), e, e.__traceback__))}
 
     def process_reorg_block(self, block):
 
