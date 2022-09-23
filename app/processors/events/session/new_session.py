@@ -88,6 +88,11 @@ class NewSessionEventProcessor(EventProcessor):
             else:
                 bonded_nominators = None
 
+            # Remove old data before insert
+            for item in SessionValidator.query(db_session).filter_by(
+                    session_id=session_id, rank_validator=rank_nr):
+                db_session.delete(item)
+
             session_validator = SessionValidator(
                 session_id=session_id,
                 validator_controller=validator_controller,
