@@ -167,7 +167,7 @@ def start_sequencer(self):
         task_result = AsyncResult(sequencer_task.value)
 
         if not sequencer_task.last_modified is None:
-            print("RUN A1 Status.diff_second = ", Status.diff_second(sequencer_task.last_modified))
+            print("RUN A1 Status.diff_second = ", Status.diff_second(sequencer_task.last_modified.strftime("%Y-%m-%d %H:%M:%S")))
 
         if not task_result or task_result.ready():
             print("RUN A2")
@@ -175,7 +175,7 @@ def start_sequencer(self):
             sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sequencer_task.save(self.session)
 
-        elif sequencer_task.last_modified is None or Status.diff_second(sequencer_task.last_modified) > 60:
+        elif sequencer_task.last_modified is None or Status.diff_second(sequencer_task.last_modified.strftime("%Y-%m-%d %H:%M:%S")) > 60:
             print("RUN A3")
             # Force start new one
             sequencer_task.value = None
