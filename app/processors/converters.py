@@ -823,6 +823,12 @@ class PolkascanHarvesterService(BaseService):
             print('RUN 2 Check BlockTotal')
             total_treasury_burn = parent_sequenced_block_data.get('total_treasury_burn', 0)
         print('RUN 3 Check BlockTotal')
+
+        # Remove old data before insert.
+        for item in BlockTotal.query(self.db_session).filter_by(
+                block_id=block.id):
+            self.db_session.delete(item)
+
         sequenced_block = BlockTotal(
             id=block.id,
             total_treasury_burn=total_treasury_burn  # update by event processor
