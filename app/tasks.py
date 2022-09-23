@@ -165,17 +165,25 @@ def start_sequencer(self):
 
     if sequencer_task.value:
         task_result = AsyncResult(sequencer_task.value)
+
+        if not sequencer_task.last_modified is None:
+            print("RUN A1 Status.diff_second = ", Status.diff_second(sequencer_task.last_modified))
+
         if not task_result or task_result.ready():
+            print("RUN A2")
             sequencer_task.value = None
             sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sequencer_task.save(self.session)
+
         elif sequencer_task.last_modified is None or Status.diff_second(sequencer_task.last_modified) > 60:
+            print("RUN A3")
             # Force start new one
             sequencer_task.value = None
             sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sequencer_task.save(self.session)
 
     if sequencer_task.value is None:
+        print("RUN A4")
         sequencer_task.value = self.request.id
         sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         sequencer_task.save(self.session)
@@ -191,6 +199,7 @@ def start_sequencer(self):
             print("KAMI-DEBUG start_sequencer task had an error.")
             result = {'result': str(e)}
 
+        print("RUN A5")
         sequencer_task.value = None
         sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         sequencer_task.save(self.session)
