@@ -167,16 +167,17 @@ def start_sequencer(self):
         task_result = AsyncResult(sequencer_task.value)
         if not task_result or task_result.ready():
             sequencer_task.value = None
-            sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sequencer_task.save(self.session)
         elif sequencer_task.last_modified is None or Status.diff_second(sequencer_task.last_modified) > 60:
             # Force start new one
             sequencer_task.value = None
-            sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sequencer_task.save(self.session)
 
     if sequencer_task.value is None:
         sequencer_task.value = self.request.id
+        # sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         sequencer_task.save(self.session)
         self.session.commit()
 
@@ -191,6 +192,7 @@ def start_sequencer(self):
             result = {'result': str(e)}
 
         sequencer_task.value = None
+        # sequencer_task.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         sequencer_task.save(self.session)
 
         self.session.commit()

@@ -48,6 +48,12 @@ class Status(BaseModel):
         current_time = datetime.now()
         return (current_time - old_time).seconds
 
+    def save(self, session):
+        self.last_modified = datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        super().save(session)
+        # session.add(self)
+        # session.flush()
+
 
 
 class Setting(BaseModel):
