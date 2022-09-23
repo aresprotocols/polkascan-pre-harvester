@@ -826,7 +826,7 @@ class PolkascanHarvesterService(BaseService):
 
         # Remove old data before insert.
         for item in BlockTotal.query(self.db_session).filter_by(
-                block_id=block.id):
+                id=block.id):
             self.db_session.delete(item)
 
         sequenced_block = BlockTotal(
