@@ -42,6 +42,7 @@ from .events.council.voted import *
 from .events.democracy.proposed import *
 from .events.estimates.participate import *
 from .events.estimates.completed_estimates import *
+from .events.estimates.new_estimates import *
 
 from .events.identity.identity_cleared import *
 from .events.identity.identity_killed import *

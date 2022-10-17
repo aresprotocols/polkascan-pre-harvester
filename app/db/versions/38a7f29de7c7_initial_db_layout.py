@@ -758,6 +758,31 @@ def upgrade():
     op.create_index(op.f('ix_ss58_address'), 'data_estimates_participants',
                     ['ss58_address'], unique=False)
 
+    op.create_table('data_estimates_list',
+                    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+                    sa.Column('estimate_id', sa.Integer(), nullable=False),
+                    sa.Column('symbol', sa.String(length=30), nullable=False),
+                    sa.Column('symbol_fraction', sa.Integer(), nullable=False),
+                    sa.Column('state', sa.String(length=16), nullable=False),
+                    sa.Column('start', sa.Integer(), nullable=False),
+                    sa.Column('end', sa.Integer(), nullable=False),
+                    sa.Column('distribute', sa.Integer(), nullable=False),
+                    sa.Column('range_data', mysql.LONGTEXT(), nullable=True),
+                    sa.Column('deviation', sa.Numeric(precision=65, scale=0), nullable=True),
+                    sa.Column('multiplier', mysql.LONGTEXT(), nullable=True),
+                    sa.Column('ticket_price', sa.Numeric(precision=65, scale=0), nullable=True),
+                    sa.Column('estimates_type', sa.String(length=30), nullable=False),
+                    sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
+                    sa.Column('block_id', sa.Integer(), nullable=False),
+                    sa.PrimaryKeyConstraint('id')
+                    )
+    op.create_index(op.f('ix_state'), 'data_estimates_list',
+                    ['state'], unique=False),
+    op.create_index(op.f('ix_symbol'), 'data_estimates_list',
+                    ['symbol'], unique=False),
+    op.create_index(op.f('ix_estimate_id'), 'data_estimates_list',
+                    ['estimate_id'], unique=False),
+
     # id, ss58_addr, public_key, reward, symbol, estimate_id, estimate_type
     op.create_table('data_estimates_winner',
                     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),

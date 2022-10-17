@@ -818,7 +818,6 @@ class ValidatorAuditFromChain(BaseModel):
 
 class PriceRequest(BaseModel):
     __tablename__ = 'data_price_request'
-
     order_id = sa.Column(sa.String(length=100), primary_key=True)
     created_by = sa.Column(sa.String(length=64), nullable=True, index=True)
     symbols = sa.Column(sa.JSON(), nullable=True)
@@ -841,6 +840,7 @@ class KamiTest(BaseModel):
 
 class EstimatesParticipants(BaseModel):
     __tablename__ = 'data_estimates_participants'
+    id = sa.Column(sa.Integer(), primary_key=True)
     symbol = sa.Column(sa.String(length=30), primary_key=True, nullable=False)
     estimate_id = sa.Column(sa.Integer(), primary_key=True, nullable=False)
     estimate_type = sa.Column(sa.String(length=30), primary_key=True, nullable=False, index=True)
@@ -851,6 +851,70 @@ class EstimatesParticipants(BaseModel):
     deposit = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True)
     option_index = sa.Column(sa.Integer(), nullable=True)
     block_id = sa.Column(sa.Integer(), nullable=False)
+
+class EstimatesDataList(BaseModel):
+    __tablename__ = 'data_estimates_list'
+    id = sa.Column(sa.Integer(), primary_key=True, autoincrement=True)
+    estimate_id = sa.Column(sa.Integer(), primary_key=True, nullable=False)
+    symbol = sa.Column(sa.String(length=30), primary_key=True, nullable=False)
+    symbol_fraction = sa.Column(sa.Integer(), nullable=False)
+    state = sa.Column(sa.String(length=16), primary_key=True, nullable=False, index=True) # InActive
+    start = sa.Column(sa.Integer(), nullable=False) # 1068200
+    end = sa.Column(sa.Integer(), nullable=False)
+    distribute = sa.Column(sa.Integer(), nullable=False)
+    range_data = sa.Column(LONGTEXT()) # range
+    deviation = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True, index=True)
+    multiplier = sa.Column(LONGTEXT())
+    ticket_price = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True, index=True)
+    estimates_type = sa.Column(sa.String(length=30), primary_key=True, nullable=False, index=True)
+    created_at = sa.Column(sa.DateTime(timezone=True), nullable=True)
+    block_id = sa.Column(sa.Integer(), nullable=False)
+
+    def fill_data(self, attributes, block, event):
+        estimate_id = attributes['id']
+        estimate_symbol = attributes['symbol']
+        estimates_type = attributes['estimates_type']
+        estimates_ticket_price = attributes['ticket_price']
+        estimates_symbol_completed_price = attributes['symbol_completed_price']
+        estimates_symbol_fraction = attributes['symbol_fraction']
+        estimates_start = attributes['start']
+        estimates_end = attributes['end']
+        estimates_distribute = attributes['distribute']
+        estimates_multiplier = attributes['multiplier']
+        estimates_deviation = attributes['deviation']
+        estimates_range = attributes['range']
+        estimates_total_reward = attributes['total_reward']
+        estimates_state = attributes['state']
+        estimates_created_at = None
+        if block:
+            estimates_created_at = block.datetime
+
+        estimates_block_id = None
+        if event:
+            estimates_block_id = event.block_id
+
+        # print(estimate_id, '-#-', estimate_symbol, '-#-', estimates_type, '-#-', estimates_ticket_price, '-#-',
+        #       estimates_symbol_completed_price, '-#-', estimates_symbol_fraction, '-#-', estimates_start, '-#-',
+        #       estimates_end, '-#-', estimates_distribute, '-#-', estimates_multiplier, '-#-', estimates_deviation,
+        #       '-#-',
+        #       estimates_range, '-#-', estimates_total_reward, '-#-', estimates_state)
+
+        return EstimatesDataList(
+            estimate_id=estimate_id,
+            symbol=estimate_symbol,
+            symbol_fraction=estimates_symbol_fraction,
+            state=estimates_state,
+            start=estimates_start,
+            end=estimates_end,
+            distribute=estimates_distribute,
+            range_data=estimates_range,
+            deviation=estimates_deviation,
+            multiplier=str(estimates_multiplier),
+            ticket_price=estimates_ticket_price,
+            estimates_type=estimates_type,
+            created_at=estimates_created_at,
+            block_id=estimates_block_id,
+        )
 
 class EstimatesWinner(BaseModel):
     __tablename__ = 'data_estimates_winner'

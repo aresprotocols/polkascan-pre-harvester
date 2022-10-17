@@ -1,56 +1,41 @@
 # CompletedEstimates
 
-from app.models.data import EstimatesParticipants, EstimatesWinner
+from app.models.data import EstimatesParticipants, EstimatesWinner, EstimatesDataList
 from app.processors.base import EventProcessor
 from scalecodec.types import ss58_encode
 from app.settings import SUBSTRATE_ADDRESS_TYPE
 
 
-# Data case:
-# [{
-# 	'type': 'SymbolEstimatesConfig<T::BlockNumber, BalanceOf<T>>',
-# 	'value': {
-# 		'symbol': 'btc-usdt',
-# 		'estimates_type': 'DEVIATION',
-# 		'id': 1,
-# 		'ticket_price': 10000000000000,
-# 		'symbol_completed_price': 187706153,
-# 		'symbol_fraction': 4,
-# 		'start': 769038,
-# 		'end': 769058,
-# 		'distribute': 769078,
-# 		'multiplier': [{
-# 			'Base': 1
-# 		}, {
-# 			'Base': 3
-# 		}, {
-# 			'Base': 5
-# 		}],
-# 		'deviation': 100000,
-# 		'range': None,
-# 		'total_reward': 120000000000000,
-# 		'state': 'Completed'
-# 	}
-# }, {
-# 	'type': 'Vec<(T::AccountId, BalanceOf<T>)>',
-# 	'value': [('0x5cd05488afc2dd05334eec23bf6e5b9ef31d38d5a3d42202ffeca6aa44ff5820', 60000000000000), ('0x6239c2f6b6f921d070a9f8cb1eab7d2783d0e71cc436736a19e83871dcd59816', 60000000000000)]
-# }]
 class EstimatesCompletedEstimates(EventProcessor):
     module_id = 'Estimates'
     event_id = 'CompletedEstimates'
 
     def accumulation_hook(self, db_session):
         print("Estimates.CompletedEstimates Run In")
-        # print(self.event.attributes, len(self.event.attributes))
 
         attribute_data = self.event.attributes
-        if len(attribute_data) >= 2:
-            estimates_config_data = attribute_data[0]['value']
-            winner_list = attribute_data[1]['value']
+        estimates_config_data = attribute_data[0]['value']
+        symbol = estimates_config_data['symbol']
+        estimate_id = estimates_config_data['id']
+        estimate_type = estimates_config_data['estimates_type']
+        estimate_state = estimates_config_data['state']
 
-            symbol = estimates_config_data['symbol']
-            estimate_id = estimates_config_data['id']
-            estimate_type = estimates_config_data['estimates_type']
+        estimate_data = EstimatesDataList.query(db_session).filter_by(symbol=symbol, estimate_id=estimate_id).first()
+        if estimate_data:
+            estimate_data.state = estimate_state
+            estimate_data.save(db_session)
+        else:
+            estimate_data = EstimatesDataList().fill_data(attributes=estimates_config_data, block=self.block, event=self.event)
+            estimate_data.save(db_session)
+
+
+        # Upgrade estimate data list.
+        # for item in EstimatesDataList.query(db_session).filter_by(symbol=symbol, estimate_id=estimate_id):
+        #     item.state = estimate_state
+        #     item.save(db_session)
+
+        if len(attribute_data) >= 2:
+            winner_list = attribute_data[1]['value']
             created_at = self.block.datetime
 
             for winner_item in winner_list:

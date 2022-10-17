@@ -37,12 +37,21 @@ if __name__ == '__main__':
     # block_hash = substrate.get_block_hash(788001)
     # block_hash = substrate.get_block_hash(772113)
     # block_hash = substrate.get_block_hash(784120)
-    block_hash = substrate.get_block_hash(784120)
+    # block_hash = substrate.get_block_hash(1068187)
+    # block_hash = substrate.get_block_hash(1053563)
+
+    # completed block number = 1059601
+
+    # new block number = 	icp-usdt / 1068157
+    # block_hash = substrate.get_block_hash(1068157)
+
+    # completed block number = icp-usdt  / 	1078301
+    block_hash = substrate.get_block_hash(1078301)
 
     substrate.init_runtime(block_hash=block_hash)
-    # block = harvester.add_block(block_hash=block_hash)
-    # harvester.sequence_block(block)
-    harvester.debug_task()
+    block = harvester.add_block(block_hash=block_hash)
+    harvester.sequence_block(block)
+    # harvester.debug_task()
 
     session.commit()
     session.close()

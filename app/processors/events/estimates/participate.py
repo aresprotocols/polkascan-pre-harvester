@@ -9,8 +9,8 @@ class ParticipateEstimates(EventProcessor):
     event_id = 'ParticipateEstimates'
 
     def accumulation_hook(self, db_session):
-        print("participate")
-        print(self.event.attributes, len(self.event.attributes))
+        # print("participate")
+        # print(self.event.attributes, len(self.event.attributes))
         # Check event requirements
         if len(self.event.attributes) >= 4:
             symbol = self.event.attributes[0]['value']
