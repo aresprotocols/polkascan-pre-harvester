@@ -869,6 +869,8 @@ class EstimatesDataList(BaseModel):
     estimates_type = sa.Column(sa.String(length=30), primary_key=True, nullable=False, index=True)
     created_at = sa.Column(sa.DateTime(timezone=True), nullable=True)
     block_id = sa.Column(sa.Integer(), nullable=False)
+    symbol_completed_price = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True, index=True)
+    total_reward = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True, index=True)
 
     def fill_data(self, attributes, block, event):
         estimate_id = attributes['id']
@@ -914,6 +916,8 @@ class EstimatesDataList(BaseModel):
             estimates_type=estimates_type,
             created_at=estimates_created_at,
             block_id=estimates_block_id,
+            symbol_completed_price=estimates_symbol_completed_price,
+            total_reward=estimates_total_reward,
         )
 
 class EstimatesWinner(BaseModel):

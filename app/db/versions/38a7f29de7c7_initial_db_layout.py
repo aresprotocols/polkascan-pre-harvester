@@ -771,6 +771,8 @@ def upgrade():
                     sa.Column('deviation', sa.Numeric(precision=65, scale=0), nullable=True),
                     sa.Column('multiplier', mysql.LONGTEXT(), nullable=True),
                     sa.Column('ticket_price', sa.Numeric(precision=65, scale=0), nullable=True),
+                    sa.Column('symbol_completed_price', sa.Numeric(precision=65, scale=0), nullable=True),
+                    sa.Column('total_reward', sa.Numeric(precision=65, scale=0), nullable=True),
                     sa.Column('estimates_type', sa.String(length=30), nullable=False),
                     sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
                     sa.Column('block_id', sa.Integer(), nullable=False),
