@@ -19,10 +19,14 @@ class EstimatesCompletedEstimates(EventProcessor):
         estimate_id = estimates_config_data['id']
         estimate_type = estimates_config_data['estimates_type']
         estimate_state = estimates_config_data['state']
+        total_reward = estimates_config_data['total_reward']
+        symbol_completed_price = estimates_config_data['symbol_completed_price']
 
-        estimate_data = EstimatesDataList.query(db_session).filter_by(symbol=symbol, estimate_id=estimate_id).first()
+        estimate_data: EstimatesDataList = EstimatesDataList.query(db_session).filter_by(symbol=symbol, estimate_id=estimate_id).first()
         if estimate_data:
             estimate_data.state = estimate_state
+            estimate_data.symbol_completed_price = symbol_completed_price
+            estimate_data.total_reward = total_reward
             estimate_data.save(db_session)
         else:
             estimate_data = EstimatesDataList().fill_data(attributes=estimates_config_data, block=self.block, event=self.event)
