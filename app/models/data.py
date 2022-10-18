@@ -908,7 +908,7 @@ class EstimatesDataList(BaseModel):
             start=estimates_start,
             end=estimates_end,
             distribute=estimates_distribute,
-            range_data=estimates_range,
+            range_data=str(estimates_range),
             deviation=estimates_deviation,
             multiplier=str(estimates_multiplier),
             ticket_price=estimates_ticket_price,

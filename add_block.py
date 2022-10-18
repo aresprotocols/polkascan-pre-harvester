@@ -46,7 +46,13 @@ if __name__ == '__main__':
     # block_hash = substrate.get_block_hash(1068157)
 
     # completed block number = icp-usdt  / 	1078301
-    block_hash = substrate.get_block_hash(1078301)
+    # block_hash = substrate.get_block_hash(1078301)
+
+    # Fix bug 20221018-1 BEGIN: 1150336
+    block_hash = substrate.get_block_hash(1150336)
+
+    # Fix bug 20221018-1 END: 1150401
+    # block_hash = substrate.get_block_hash(1150401)
 
     substrate.init_runtime(block_hash=block_hash)
     block = harvester.add_block(block_hash=block_hash)
