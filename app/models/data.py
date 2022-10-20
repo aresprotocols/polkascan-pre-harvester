@@ -849,6 +849,7 @@ class EstimatesParticipants(BaseModel):
     price = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True)
     deposit = sa.Column(sa.Numeric(precision=65, scale=0), nullable=True)
     option_index = sa.Column(sa.Integer(), nullable=True)
+    end = sa.Column(sa.Integer(), nullable=False)
     block_id = sa.Column(sa.Integer(), nullable=False)
 
 class EstimatesDataList(BaseModel):

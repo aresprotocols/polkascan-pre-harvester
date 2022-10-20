@@ -9,7 +9,7 @@ class ParticipateEstimates(EventProcessor):
     event_id = 'ParticipateEstimates'
 
     def accumulation_hook(self, db_session):
-        # print("participate")
+        print("#### = ParticipateEstimates")
         # print(self.event.attributes, len(self.event.attributes))
         # Check event requirements
         if len(self.event.attributes) >= 4:
@@ -18,6 +18,7 @@ class ParticipateEstimates(EventProcessor):
             participant = self.event.attributes[3]['value'].replace('0x', '')
             ss58_address = ss58_encode(participant, SUBSTRATE_ADDRESS_TYPE)
             price = self.event.attributes[2]['value']['estimates']
+            end = self.event.attributes[2]['value']['end']
             option_index = self.event.attributes[2]['value']['range_index']
             deposit = None
 
@@ -57,10 +58,10 @@ class ParticipateEstimates(EventProcessor):
             ss58_address=ss58_address,
             created_at=self.block.datetime,
             price=price,
+            end=end,
             block_id=self.event.block_id,
             deposit=deposit,
         )
-
         participant.save(db_session)
 
     def accumulation_revert(self, db_session):

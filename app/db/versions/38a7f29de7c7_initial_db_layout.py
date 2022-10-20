@@ -738,6 +738,7 @@ def upgrade():
 
     op.create_table('data_estimates_participants',
                     sa.Column('block_id', sa.Integer(), nullable=False),
+                    sa.Column('end', sa.Integer(), nullable=False),
                     sa.Column('symbol', sa.String(length=30), nullable=False),
                     sa.Column('estimate_id', sa.Integer(), nullable=False),
                     sa.Column('estimate_type', sa.String(length=30), nullable=False),
