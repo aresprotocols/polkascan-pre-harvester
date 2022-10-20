@@ -22,15 +22,15 @@ class ParticipateEstimates(EventProcessor):
             deposit = None
 
         if len(self.event.attributes) == 4:
-            estimate_type = 'price'
+            estimate_type = 'deviation'
             if price is None:
                 estimate_type = 'range'
         elif len(self.event.attributes) == 5:
-            estimate_type = 'price'
+            estimate_type = 'deviation'
             if self.event.attributes[4]['value'] == 'RANGE':
                 estimate_type = 'range'
         elif len(self.event.attributes) == 6:
-            estimate_type = 'price'
+            estimate_type = 'deviation'
             if self.event.attributes[4]['value'] == 'RANGE':
                 estimate_type = 'range'
             deposit = self.event.attributes[5]['value']
