@@ -54,7 +54,9 @@ if __name__ == '__main__':
     # Fix bug 20221018-1 END: 1150401
     # block_hash = substrate.get_block_hash(1150401)
 
-    block_hash = substrate.get_block_hash(1150379)
+    # block_hash = substrate.get_block_hash(1237331)
+    # block_hash = substrate.get_block_hash(1237338)
+    block_hash = substrate.get_block_hash(1237359)
 
     substrate.init_runtime(block_hash=block_hash)
     block = harvester.add_block(block_hash=block_hash)

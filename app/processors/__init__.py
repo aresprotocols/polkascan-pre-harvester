@@ -76,6 +76,7 @@ from .events.staking.withdrawn import *
 
 from .events.system.new_account import *
 from .events.system.killed_account import *
+from .events.system.active_estimates import *
 
 from .events.tech_comm.proposed import *
 from .events.tech_comm.voted import *
