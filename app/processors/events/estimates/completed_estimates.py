@@ -46,18 +46,32 @@ class EstimatesCompletedEstimates(EventProcessor):
                 winner_acc = winner_item[0].replace('0x', '')
                 reward = winner_item[1]
 
-                db_data = EstimatesWinner(
+                # TODO check and try to update data if exists.
+                # ['block_id', 'symbol', 'estimate_id', 'estimate_type', 'ss58_address'], unique=True)
+                estimates_winner: EstimatesWinner = EstimatesWinner.query(db_session).filter_by(
+                    block_id=self.event.block_id,
                     symbol=symbol,
                     estimate_id=estimate_id,
                     estimate_type=estimate_type,
-                    created_at=created_at,
                     ss58_address=ss58_encode(winner_acc, SUBSTRATE_ADDRESS_TYPE),
-                    public_key=winner_acc,
-                    reward=reward,
-                    block_id=self.event.block_id,
-                )
-
-                db_data.save(db_session)
+                ).first()
+                if estimates_winner:
+                    estimates_winner.created_at = created_at
+                    estimates_winner.reward = reward
+                    estimates_winner.public_key = winner_acc
+                    estimates_winner.save(db_session)
+                else:
+                    db_data = EstimatesWinner(
+                        symbol=symbol,
+                        estimate_id=estimate_id,
+                        estimate_type=estimate_type,
+                        created_at=created_at,
+                        ss58_address=ss58_encode(winner_acc, SUBSTRATE_ADDRESS_TYPE),
+                        public_key=winner_acc,
+                        reward=reward,
+                        block_id=self.event.block_id,
+                    )
+                    db_data.save(db_session)
 
         else:
             print("Current runtime events can not supported winner record.")
