@@ -9,6 +9,9 @@ class PurchasedAvgPriceEventProcessor(EventProcessor):
     def accumulation_hook(self, db_session):
         attributes = self.event.attributes
         purchase_id = attributes[0]['value']
+        if purchase_id['String']:
+            purchase_id = purchase_id['String']
+
         data = attributes[1]['value']
         price_request: PriceRequest = PriceRequest.query(db_session).filter_by(order_id=purchase_id).first()
         if price_request:

@@ -12,6 +12,10 @@ class NewPurchaseRequestEventProcessor(EventProcessor):
         fee = attributes[2]['value']
         era = attributes[3]['value']
 
+        if purchase_id['String']:
+            purchase_id = purchase_id['String']
+
+
         era_price_request: EraPriceRequest = EraPriceRequest.query(db_session).filter_by(era=era).first()
 
         # exist
@@ -20,8 +24,7 @@ class NewPurchaseRequestEventProcessor(EventProcessor):
             era_price_request.save(db_session)
         else:
             previous: EraPriceRequest = EraPriceRequest.query(db_session).filter_by(era=era - 1).first()
-            # print("KAMI attributes, fee =", fee)
-            # print("KAMI attributes, era =", era)
+
             # era = 0
             era_price_request = EraPriceRequest(
                 era=era,

@@ -736,6 +736,74 @@ def upgrade():
                     sa.UniqueConstraint('validator', 'ares_authority', name='unqiue_validator_ares_authority')
                     )
 
+    op.create_table('data_reminder_lifecycle',
+                    sa.Column('id', sa.Integer(), nullable=False),
+                    sa.Column('reminder_id', sa.Integer, nullable=False),
+                    sa.Column('points', sa.Integer, nullable=False),
+                    sa.Column('is_released', sa.Integer, nullable=True),
+                    # sa.Column('owner', sa.String(length=100), nullable=True),
+                    # sa.Column('owner_ss58', sa.String(length=48), nullable=True),
+                    sa.PrimaryKeyConstraint('id'),
+                    sa.UniqueConstraint('reminder_id', name='unqiue_reminder_id')
+                    )
+    op.create_index(op.f('ix_data_reminder_lifecycle_points'), 'data_reminder_lifecycle',
+                    ['points'], unique=False)
+    op.create_index(op.f('ix_data_reminder_lifecycle_is_released'), 'data_reminder_lifecycle',
+                    ['is_released'], unique=False)
+    # op.create_index(op.f('ix_data_reminder_owner'), 'data_reminder',
+    #                 ['owner'], unique=False)
+    # op.create_index(op.f('ix_data_reminder_owner_ss58'), 'data_reminder',
+    #                 ['owner_ss58'], unique=False)
+
+    op.create_table('data_reminder_msg',
+                    sa.Column('id', sa.Integer(), nullable=False),
+                    sa.Column('reminder_id', sa.Integer, nullable=False),
+                    sa.Column('remaining_count', sa.Integer, nullable=False),
+                    sa.Column('send_bn', sa.Integer(), nullable=False),
+                    sa.Column('submitter', sa.String(length=100), nullable=False, index=True),
+                    sa.Column('response_mark', sa.String(length=64), nullable=True),
+                    sa.Column('status', sa.Integer(), nullable=True, index=True),
+                    sa.Column('block_id', sa.Integer(), nullable=False, index=True),
+                    sa.PrimaryKeyConstraint('id'),
+                    sa.UniqueConstraint('reminder_id', 'send_bn', name='unqiue_reminder_id_send_bn')
+                    )
+    op.create_index(op.f('ix_data_remindermsg_block_id'), 'data_reminder_msg',
+                    ['block_id'], unique=False)
+    op.create_index(op.f('ix_data_remindermsg_submitter'), 'data_reminder_msg',
+                    ['submitter'], unique=False)
+    op.create_index(op.f('ix_data_remindermsg_status'), 'data_reminder_msg',
+                    ['status'], unique=False)
+
+    op.create_table('data_reminder',
+                    sa.Column('id', sa.Integer(), nullable=False),
+                    sa.Column('reminder_id', sa.Integer, nullable=False),
+                    sa.Column('owner', sa.String(length=100), nullable=False),
+                    sa.Column('owner_ss58', sa.String(length=48), nullable=True),
+                    sa.Column('interval_bn', sa.Integer(), nullable=False),
+                    sa.Column('repeat_count', sa.Integer(), nullable=False),
+                    sa.Column('create_bn', sa.Integer(), nullable=False),
+                    sa.Column('price_snapshot', sa.Numeric(), nullable=False),
+                    sa.Column('trigger_condition_type', sa.String(length=100), nullable=False),
+                    sa.Column('trigger_condition_price_key', sa.String(length=100), nullable=False),
+                    sa.Column('anchor_price', sa.Numeric(), nullable=False),
+                    sa.Column('trigger_receiver_type', sa.String(length=100), nullable=False),
+                    sa.Column('trigger_receiver_url', sa.String(length=512), nullable=False),
+                    sa.Column('trigger_receiver_sign', sa.String(length=256), nullable=False),
+                    sa.Column('update_bn', sa.Integer(), nullable=False),
+                    sa.Column('tip', sa.String(length=256), nullable=True),
+                    sa.Column('block_id', sa.Integer(), nullable=False),
+
+                    sa.PrimaryKeyConstraint('id'),
+                    sa.UniqueConstraint('reminder_id', 'reminder_id', name='unique_reminder_id')
+                    )
+    op.create_index(op.f('ix_data_reminder_block_id'), 'data_reminder',
+                    ['block_id'], unique=False)
+    op.create_index(op.f('ix_data_reminder_owner'), 'data_reminder',
+                    ['owner'], unique=False)
+    op.create_index(op.f('ix_data_reminder_owner_ss58'), 'data_reminder',
+                    ['owner_ss58'], unique=False)
+
+
     op.create_table('data_estimates_participants',
                     sa.Column('block_id', sa.Integer(), nullable=False),
                     sa.Column('end', sa.Integer(), nullable=False),

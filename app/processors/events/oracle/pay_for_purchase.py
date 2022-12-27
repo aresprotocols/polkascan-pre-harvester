@@ -9,6 +9,10 @@ class PayForPurchaseEventProcessor(EventProcessor):
     def accumulation_hook(self, db_session):
         attributes = self.event.attributes
         purchase_id = attributes[3]['value']
+
+        if purchase_id['String']:
+            purchase_id = purchase_id['String']
+
         fee = attributes[2]['value']
         price_request: PriceRequest = PriceRequest.query(db_session).filter_by(order_id=purchase_id).first()
         if price_request:

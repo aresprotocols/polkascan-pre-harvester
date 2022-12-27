@@ -29,6 +29,7 @@ from .blocks.block_total import *
 from .blocks.identity import *
 from .blocks.identity_judgement import *
 from .blocks.log import *
+from .blocks.reminder import *
 
 from .events.balances.deposit import *
 from .events.balances.transfer import *
@@ -84,6 +85,11 @@ from .events.tech_comm.voted import *
 from .events.treasury.awarded import *
 from .events.treasury.deposit import *
 from .events.treasury.burnt import *
+
+from .events.ares_reminder.create_reminder import *
+from .events.ares_reminder.reminder_msg import *
+from .events.ares_reminder.reminder_released import *
+from .events.ares_reminder.update_reminder import *
 
 from .extrinsics.democracy.proxy_vote import *
 from .extrinsics.democracy.second import *
