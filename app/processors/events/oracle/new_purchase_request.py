@@ -12,7 +12,7 @@ class NewPurchaseRequestEventProcessor(EventProcessor):
         fee = attributes[2]['value']
         era = attributes[3]['value']
 
-        if purchase_id['String']:
+        if isinstance(purchase_id, dict) and purchase_id['String']:
             purchase_id = purchase_id['String']
 
 

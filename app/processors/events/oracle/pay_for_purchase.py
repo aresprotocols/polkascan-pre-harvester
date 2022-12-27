@@ -10,7 +10,7 @@ class PayForPurchaseEventProcessor(EventProcessor):
         attributes = self.event.attributes
         purchase_id = attributes[3]['value']
 
-        if purchase_id['String']:
+        if isinstance(purchase_id, dict) and purchase_id['String']:
             purchase_id = purchase_id['String']
 
         fee = attributes[2]['value']

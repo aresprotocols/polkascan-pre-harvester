@@ -60,7 +60,10 @@ if __name__ == '__main__':
 
     # block_hash = substrate.get_block_hash(96) # update
     # block_hash = substrate.get_block_hash(33) # msg
-    block_hash = substrate.get_block_hash(23) # create
+    # block_hash = substrate.get_block_hash(23) # create
+
+    block_hash = substrate.get_block_hash(1856876) # NewPurchasedRequest
+
 
     # block_hash = substrate.get_block_hash(67845)
     # block_hash = substrate.get_block_hash(68157)
