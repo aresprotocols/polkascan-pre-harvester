@@ -764,6 +764,7 @@ def upgrade():
                     sa.Column('response_mark', sa.String(length=64), nullable=True),
                     sa.Column('status', sa.Integer(), nullable=True, index=True),
                     sa.Column('block_id', sa.Integer(), nullable=False, index=True),
+                    sa.Column('datetime', sa.DateTime(timezone=True), nullable=True),
                     sa.PrimaryKeyConstraint('id'),
                     sa.UniqueConstraint('reminder_id', 'send_bn', name='unqiue_reminder_id_send_bn')
                     )
@@ -773,6 +774,8 @@ def upgrade():
                     ['submitter'], unique=False)
     op.create_index(op.f('ix_data_remindermsg_status'), 'data_reminder_msg',
                     ['status'], unique=False)
+    op.create_index(op.f('ix_data_remindermsg_datetime'), 'data_reminder_msg',
+                    ['datetime'], unique=False)
 
     op.create_table('data_reminder',
                     sa.Column('id', sa.Integer(), nullable=False),
@@ -792,6 +795,7 @@ def upgrade():
                     sa.Column('update_bn', sa.Integer(), nullable=False),
                     sa.Column('tip', sa.String(length=256), nullable=True),
                     sa.Column('block_id', sa.Integer(), nullable=False),
+                    sa.Column('datetime', sa.DateTime(timezone=True), nullable=True),
 
                     sa.PrimaryKeyConstraint('id'),
                     sa.UniqueConstraint('reminder_id', 'reminder_id', name='unique_reminder_id')
@@ -802,6 +806,8 @@ def upgrade():
                     ['owner'], unique=False)
     op.create_index(op.f('ix_data_reminder_owner_ss58'), 'data_reminder',
                     ['owner_ss58'], unique=False)
+    op.create_index(op.f('ix_data_reminder_datetime'), 'data_reminder',
+                    ['datetime'], unique=False)
 
 
     op.create_table('data_estimates_participants',

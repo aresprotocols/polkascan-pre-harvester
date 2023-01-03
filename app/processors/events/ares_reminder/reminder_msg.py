@@ -39,6 +39,7 @@ class AresReminderMsg(EventProcessor):
             submitter=submitter,
             response_mark=response_mark,
             status=status,
+            datetime=self.block.datetime,
         )
         db_data.save(db_session)
 

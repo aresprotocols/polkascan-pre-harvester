@@ -94,6 +94,7 @@ class AresCreateReminder(EventProcessor):
                 trigger_receiver_sign=trigger_receiver_sign,
                 update_bn=update_bn,
                 tip=tip,
+                datetime=self.block.datetime,
             )
             db_data.save(db_session)
 

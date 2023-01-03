@@ -66,23 +66,25 @@ class AresCreateReminder(EventProcessor):
         db_data = DataReminder.query(db_session).filter_by(reminder_id=reminder_id).first()
         if db_data:
             if db_data.block_id > self.block.id :
-                db_data.block_id = self.block.id,
-                db_data.reminder_id = reminder_id,
-                db_data.owner = owner,
-                db_data.owner_ss58 = ss58_encode(owner, SUBSTRATE_ADDRESS_TYPE),
-                db_data.interval_bn = interval_bn,
-                db_data.repeat_count = repeat_count,
-                db_data.create_bn = create_bn,
-                db_data.price_snapshot = price_snapshot,
-                db_data.trigger_condition_type = trigger_condition_type,
-                db_data.trigger_condition_price_key = trigger_condition_price_key,
-                db_data.anchor_price = anchor_price,
-                db_data.trigger_receiver_type = trigger_receiver_type,
-                db_data.trigger_receiver_url = trigger_receiver_url,
-                db_data.trigger_receiver_sign = trigger_receiver_sign,
-                db_data.update_bn = update_bn,
-                db_data.tip = tip,
+                db_data.block_id = self.block.id
+                db_data.reminder_id = reminder_id
+                db_data.owner = owner
+                db_data.owner_ss58 = ss58_encode(owner, SUBSTRATE_ADDRESS_TYPE)
+                db_data.interval_bn = interval_bn
+                db_data.repeat_count = repeat_count
+                db_data.create_bn = create_bn
+                db_data.price_snapshot = price_snapshot
+                db_data.trigger_condition_type = trigger_condition_type
+                db_data.trigger_condition_price_key = trigger_condition_price_key
+                db_data.anchor_price = anchor_price
+                db_data.trigger_receiver_type = trigger_receiver_type
+                db_data.trigger_receiver_url = trigger_receiver_url
+                db_data.trigger_receiver_sign = trigger_receiver_sign
+                db_data.update_bn = update_bn
+                db_data.tip = tip
+                db_data.datetime = self.block.datetime
                 db_data.save(db_session)
+
         else:
             db_data = DataReminder(
                 block_id=self.block.id,
@@ -101,6 +103,7 @@ class AresCreateReminder(EventProcessor):
                 trigger_receiver_sign=trigger_receiver_sign,
                 update_bn=update_bn,
                 tip=tip,
+                datetime=self.block.datetime,
             )
             db_data.save(db_session)
 
