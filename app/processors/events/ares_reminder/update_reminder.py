@@ -65,7 +65,7 @@ class AresCreateReminder(EventProcessor):
         # search old data reminder
         db_data = DataReminder.query(db_session).filter_by(reminder_id=reminder_id).first()
         if db_data:
-            if db_data.block_id > self.block.id :
+            if self.block.id > db_data.block_id:
                 db_data.block_id = self.block.id
                 db_data.reminder_id = reminder_id
                 db_data.owner = owner
