@@ -808,6 +808,8 @@ def upgrade():
                     ['owner_ss58'], unique=False)
     op.create_index(op.f('ix_data_reminder_datetime'), 'data_reminder',
                     ['datetime'], unique=False)
+    op.create_index(op.f('ix_data_reminder_tip'), 'data_reminder',
+                    ['tip'], unique=False)
 
 
     op.create_table('data_estimates_participants',
