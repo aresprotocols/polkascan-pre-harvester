@@ -120,9 +120,9 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
             if not block or block.id > 0:
 
                 if not block:
-                    print('Kami-Debug 0504-1306', block.id, block_hash)
-                else:
                     print('Kami-Debug 0504-1307', block_hash)
+                else:
+                    print('Kami-Debug 0504-1306', block.id, block_hash)
 
                 # Process block
                 block = harvester.add_block(block_hash)
