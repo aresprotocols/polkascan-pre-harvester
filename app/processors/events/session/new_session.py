@@ -126,6 +126,7 @@ class NewSessionEventProcessor(EventProcessor):
 
                 session_nominator.save(db_session)
 
+
         # Store session
         session = Session(
             id=session_id,
@@ -137,6 +138,11 @@ class NewSessionEventProcessor(EventProcessor):
             count_nominators=len(set(nominators)),
             era=current_era
         )
+
+        exists_session = Session.query(db_session).filter_by(id=session.id).first()
+        if exists_session:
+            # If exists delete first
+            exists_session.delete(db_session)
 
         session.save(db_session)
 
@@ -436,6 +442,11 @@ class NewSessionEventProcessor(EventProcessor):
             count_nominators=len(set(nominators)),
             era=current_era
         )
+
+        exists_session = Session.query(db_session).filter_by(id=session.id).first()
+        if exists_session:
+            # If exists delete first
+            exists_session.delete(db_session)
 
         session.save(db_session)
 
