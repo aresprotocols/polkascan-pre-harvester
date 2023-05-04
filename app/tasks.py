@@ -139,6 +139,7 @@ def accumulate_block_recursive(self, block_hash, end_block_hash=None):
         self.metadata_store = harvester.metadata_store
 
         if block_hash != end_block_hash and block and block.id > 0:
+            print('KAMI-DEBUG: 0504-1047: ', block.id, block.parent_hash, end_block_hash)
             accumulate_block_recursive.delay(block.parent_hash, end_block_hash)
 
     except BlockAlreadyAdded as e:
@@ -251,6 +252,7 @@ def start_harvester(self, check_gaps=True):
                 end_block_hash = substrate.get_block_hash(end)
                 start_block_hash = substrate.get_block_hash(start)
                 # Start processing task
+                print('KAMI-DEBUG: 0504-1048: ', start_block_hash, end_block_hash)
                 accumulate_block_recursive.delay(start_block_hash, end_block_hash)
                 block_sets.append({
                     'start': start,
@@ -271,6 +273,7 @@ def start_harvester(self, check_gaps=True):
 
     end_block_hash = None
 
+    print('KAMI-DEBUG: 0504-1049: ', start_block_hash, end_block_hash)
     accumulate_block_recursive.delay(start_block_hash, end_block_hash)
 
     block_sets.append({

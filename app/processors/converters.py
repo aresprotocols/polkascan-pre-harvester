@@ -918,7 +918,8 @@ class PolkascanHarvesterService(BaseService):
 
             for block_nr in range(start_block_id, end_block_id, chunk_size):
                 # TODO replace limit with filter_by block range
-                block_range = Block.query(self.db_session).order_by('id')[block_nr:block_nr + chunk_size]
+                # block_range = Block.query(self.db_session).order_by('id')[block_nr:block_nr + chunk_size]
+                block_range = Block.query(self.db_session).order_by('id').offset(block_nr).limit(chunk_size)
                 for block in block_range:
                     if parent_block:
                         print('Kami-DEBUG block.id={}, parent_block.id={}'.format(block.id, parent_block.id))
