@@ -126,6 +126,7 @@ class NewSessionEventProcessor(EventProcessor):
 
                 session_nominator.save(db_session)
 
+
         # Store session
         session = Session(
             id=session_id,
@@ -137,6 +138,10 @@ class NewSessionEventProcessor(EventProcessor):
             count_nominators=len(set(nominators)),
             era=current_era
         )
+
+        exists_session_data = Session.query(db_session).filter_by(id=session.id).first()
+        if exists_session_data:
+            db_session.delete(exists_session_data)
 
         session.save(db_session)
 
@@ -153,6 +158,11 @@ class NewSessionEventProcessor(EventProcessor):
             end_at_block=self.block.id,
             count_blocks=count_blocks
         )
+
+        exists_session_total_data = SessionTotal.query(db_session).filter_by(id=session_total.id).first()
+        if exists_session_total_data:
+            # If exists delete first
+            db_session.delete(exists_session_total_data)
 
         session_total.save(db_session)
 
@@ -437,6 +447,10 @@ class NewSessionEventProcessor(EventProcessor):
             era=current_era
         )
 
+        exists_session_data = Session.query(db_session).filter_by(id=session.id).first()
+        if exists_session_data:
+            session.delete(exists_session_data)
+
         session.save(db_session)
 
         # Retrieve previous session to calculate count_blocks
@@ -452,6 +466,11 @@ class NewSessionEventProcessor(EventProcessor):
             end_at_block=self.block.id,
             count_blocks=count_blocks
         )
+
+        exists_session_total_data = SessionTotal.query(db_session).filter_by(id=session_total.id).first()
+        if exists_session_total_data:
+            # If exists delete first
+            db_session.delete(exists_session_total_data)
 
         session_total.save(db_session)
 
