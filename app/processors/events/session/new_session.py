@@ -141,6 +141,7 @@ class NewSessionEventProcessor(EventProcessor):
 
         exists_session = Session.query(db_session).filter_by(id=session.id).first()
         if exists_session:
+            print('KAMI-DEBUG: exists_session - ', exists_session)
             # If exists delete first
             exists_session.delete(db_session)
 
