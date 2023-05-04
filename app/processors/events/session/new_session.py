@@ -139,11 +139,9 @@ class NewSessionEventProcessor(EventProcessor):
             era=current_era
         )
 
-        exists_session = Session.query(db_session).filter_by(id=session.id).first()
-        if exists_session:
-            print('KAMI-DEBUG: 1155 - exists_session  - ', exists_session)
-            # If exists delete first
-            exists_session.delete(db_session)
+        exists_session_data = Session.query(db_session).filter_by(id=session.id).first()
+        if exists_session_data:
+            db_session.delete(exists_session_data)
 
         session.save(db_session)
 
@@ -161,10 +159,10 @@ class NewSessionEventProcessor(EventProcessor):
             count_blocks=count_blocks
         )
 
-        exists_session_total = SessionTotal.query(db_session).filter_by(id=session_total.id).first()
-        if exists_session_total:
+        exists_session_total_data = SessionTotal.query(db_session).filter_by(id=session_total.id).first()
+        if exists_session_total_data:
             # If exists delete first
-            exists_session_total.delete(db_session)
+            db_session.delete(exists_session_total_data)
 
         session_total.save(db_session)
 
@@ -449,11 +447,9 @@ class NewSessionEventProcessor(EventProcessor):
             era=current_era
         )
 
-        exists_session = Session.query(db_session).filter_by(id=session.id).first()
-        if exists_session:
-            print('KAMI-DEBUG: 1156 - exists_session  - ', exists_session)
-            # If exists delete first
-            exists_session.delete(db_session)
+        exists_session_data = Session.query(db_session).filter_by(id=session.id).first()
+        if exists_session_data:
+            session.delete(exists_session_data)
 
         session.save(db_session)
 
@@ -471,10 +467,10 @@ class NewSessionEventProcessor(EventProcessor):
             count_blocks=count_blocks
         )
 
-        exists_session_total = SessionTotal.query(db_session).filter_by(id=session_total.id).first()
-        if exists_session_total:
+        exists_session_total_data = SessionTotal.query(db_session).filter_by(id=session_total.id).first()
+        if exists_session_total_data:
             # If exists delete first
-            exists_session_total.delete(db_session)
+            db_session.delete(exists_session_total_data)
 
         session_total.save(db_session)
 
