@@ -160,6 +160,11 @@ class NewSessionEventProcessor(EventProcessor):
             count_blocks=count_blocks
         )
 
+        exists_session_total = SessionTotal.query(db_session).filter_by(id=session_total.id).first()
+        if exists_session_total:
+            # If exists delete first
+            exists_session_total.delete(db_session)
+
         session_total.save(db_session)
 
         # Update validator flags
@@ -463,6 +468,11 @@ class NewSessionEventProcessor(EventProcessor):
             end_at_block=self.block.id,
             count_blocks=count_blocks
         )
+
+        exists_session_total = SessionTotal.query(db_session).filter_by(id=session_total.id).first()
+        if exists_session_total:
+            # If exists delete first
+            exists_session_total.delete(db_session)
 
         session_total.save(db_session)
 
