@@ -99,21 +99,38 @@ class Block(BaseModel):
 
     @classmethod
     def get_missing_block_ids(cls, session):
+        # return session.execute(text("""
+        #                                     SELECT
+        #                                       z.expected as block_from, z.got-1 as block_to
+        #                                     FROM (
+        #                                      SELECT
+        #                                       @rownum:=@rownum+1 AS expected,
+        #                                       IF(@rownum=id, 0, @rownum:=id) AS got
+        #                                      FROM
+        #                                       (SELECT @rownum:=0) AS a
+        #                                       JOIN data_block
+        #                                       ORDER BY id
+        #                                      ) AS z
+        #                                     WHERE z.got!=0
+        #                                     ORDER BY block_from DESC
+        #                                     """)
+        #                        )
         return session.execute(text("""
-                                            SELECT
-                                              z.expected as block_from, z.got-1 as block_to
-                                            FROM (
-                                             SELECT
-                                              @rownum:=@rownum+1 AS expected,
-                                              IF(@rownum=id, 0, @rownum:=id) AS got
-                                             FROM
-                                              (SELECT @rownum:=0) AS a
-                                              JOIN data_block
-                                              ORDER BY id
-                                             ) AS z
-                                            WHERE z.got!=0
-                                            ORDER BY block_from DESC
-                                            """)
+                                                    SELECT
+                                                      z.expected as block_from, z.got-1 as block_to
+                                                    FROM (
+                                                     SELECT
+                                                      @rownum:=@rownum+1 AS expected,
+                                                      IF(@rownum=id, 0, @rownum:=id) AS got
+                                                     FROM
+                                                      (SELECT @rownum:=6289000) AS a
+                                                      JOIN data_block
+                                                      WHERE data_block.id > 6289000
+                                                      ORDER BY id
+                                                     ) AS z
+                                                    WHERE z.got!=0
+                                                    ORDER BY block_from DESC
+                                                    """)
                                )
 
 
