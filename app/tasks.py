@@ -254,6 +254,9 @@ def start_harvester(self, check_gaps=True):
                 end = start - BLOCKS_LIMIT
                 end = 0 if end < 0 else end
                 # Get start and end block hash
+
+                print("Get hash from blocknum: start, end", start, end)
+
                 end_block_hash = substrate.get_block_hash(end)
                 start_block_hash = substrate.get_block_hash(start)
                 # Start processing task
