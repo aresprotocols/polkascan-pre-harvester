@@ -995,10 +995,11 @@ class PolkascanHarvesterService(BaseService):
                             raise BlockIntegrityError(
                                 'ERROR: Block #{} failed integrity checks, Re-adding #{}.. '.format(parent_block.id,
                                                                                                     block.id))
-                        else:
-                            integrity_head.value = block.id
+                        # else:
+                        #     integrity_head.value = block.id
 
                     parent_block = block
+                    integrity_head.value = block.id
 
                     if block.id == end_block_id:
                         break
