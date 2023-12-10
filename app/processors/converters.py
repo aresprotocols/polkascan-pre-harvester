@@ -491,9 +491,16 @@ class PolkascanHarvesterService(BaseService):
 
     def add_block(self, block_hash):
 
+
+
+
         # Check if block is already process
+        print('Add block hash = ', block_hash)
         if Block.query(self.db_session).filter_by(hash=block_hash).count() > 0:
+            # self.remove_block(block_hash=block_hash)
             raise BlockAlreadyAdded(block_hash)
+            # remove old data
+
 
         if settings.SUBSTRATE_MOCK_EXTRINSICS:
             self.substrate.mock_extrinsics = settings.SUBSTRATE_MOCK_EXTRINSICS
@@ -772,6 +779,8 @@ class PolkascanHarvesterService(BaseService):
         # Retrieve block
         block = Block.query(self.db_session).filter_by(hash=block_hash).first()
 
+        print('remove-block: ', block.id)
+
         # Revert event processors
         for event in Event.query(self.db_session).filter_by(block_id=block.id):
             for processor_class in ProcessorRegistry().get_event_processors(event.module_id, event.event_id):
@@ -791,13 +800,17 @@ class PolkascanHarvesterService(BaseService):
 
         # Delete events
         for item in Event.query(self.db_session).filter_by(block_id=block.id):
+            print('remove-event: ', item)
             self.db_session.delete(item)
         # Delete extrinsics
         for item in Extrinsic.query(self.db_session).filter_by(block_id=block.id):
+            print('remove-extrinsics: ', item)
             self.db_session.delete(item)
 
         # Delete block
+        print('delete-block', block.id, block.hash)
         self.db_session.delete(block)
+        self.db_session.commit()
 
     def debug_task(self):
         sequencer_task = Status.get_status(self.db_session, 'SEQUENCER_TASK_ID')
@@ -953,9 +966,9 @@ class PolkascanHarvesterService(BaseService):
                                 print(error_msg)
                                 raise BlockIntegrityError(error_msg)
 
-                            raise BlockIntegrityError(
-                                'Kami Block #{} is missing.. stopping check '.format(parent_block.id + 1)
-                            )
+                            # raise BlockIntegrityError(
+                            #     'Kami Block #{} is missing.. stopping check '.format(parent_block.id + 1)
+                            # )
 
                         elif block.parent_hash != parent_block.hash:
 

@@ -64,7 +64,13 @@ if __name__ == '__main__':
 
     # 0x5708b8d11e9fda14b18d3593cd2251af9f6b0aef94fc2b7c642b75449f0c056b
     # block_hash = substrate.get_block_hash(1949187) # NewPurchasedRequest
-    block_hash = substrate.get_block_hash(7132158) # Msg
+
+
+    block_num= 6223724
+
+    print('block_num = ', block_num)
+
+    block_hash = substrate.get_block_hash(block_num) # Msg
 
 
     # block_hash = substrate.get_block_hash(67845)
